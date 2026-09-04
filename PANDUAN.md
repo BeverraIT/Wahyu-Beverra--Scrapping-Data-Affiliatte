@@ -135,6 +135,37 @@ sudah dicocokkan persis dengan header AFFILIATE 3 (16 kolom A-P). Kode pendek
 kolom "Produk Top 10" diisi di `KODE_PRODUK`; yang belum diisi ditebak dari
 kata terakhir nama produk dan selalu dilaporkan waktu Excel dibuat.
 
+## Popup pengumuman & peringatan halaman ditutup
+
+Affiliate Center kadang memunculkan modal pengumuman. Selama modalnya
+terbuka, klik apa pun di belakangnya TIDAK tembus -- otomatisasi macet tanpa
+sebab yang kelihatan. `tutup_popup()` dipanggil di empat titik: sesudah
+halaman termuat, sebelum klik baris produk, sesudah detail terbuka, dan saat
+klik halaman creator gagal.
+
+Dua hal yang bikin fungsi itu benar:
+
+- **Jangan pakai `offsetParent` untuk cek terlihat.** Elemen `position:fixed`
+  -- yaitu semua modal -- selalu memberi `null`, jadi popupnya tidak pernah
+  ketemu. Versi pertama kena ini dan ujinya melaporkan `ditutup=0`. Sekarang
+  dipakai `getBoundingClientRect()` + `getComputedStyle`.
+- **Tombolnya dicari HANYA di dalam modal, teksnya dicocokkan persis.**
+  Halaman punya tombol lain bernama "Oke"/"Tutup"; kalau dicocokkan dengan
+  "mengandung" atau dicari di seluruh halaman, tombol yang salah bisa
+  terpencet. Diuji: tombol "Oke" kembar di luar modal tidak tersentuh, dan
+  halaman tanpa modal menghasilkan nol klik.
+
+### Halaman ini akan dinonaktifkan Tokopedia
+
+Bannernya sudah muncul: *"Halaman ini akan segera dinonaktifkan. Sementara
+itu, data bisa Anda akses di halaman Performa baru."*
+
+`periksa_peringatan_halaman()` mendeteksi kalimat itu dan menulisnya ke log
+tiap penarikan, jadi tidak akan kaget waktu halamannya benar-benar mati.
+Kalau sudah mati, alur pemulihannya sudah ada: `rekam_endpoint.py` di halaman
+Performa yang baru, lalu kunci ulang `POLA_API` + `PETA_KOLOM` + selektornya
+seperti waktu pertama kali dibangun.
+
 ## Kenapa sesi Chrome tidak bisa disalin
 
 Chrome sejak v127 mengenkripsi cookie dengan App-Bound Encryption: nilai

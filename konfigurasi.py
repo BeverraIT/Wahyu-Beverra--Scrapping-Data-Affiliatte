@@ -215,6 +215,23 @@ SEL_INPUT_TANGGAL = [
 ]
 SEL_TANGGAL_TERSEDIA = ".kora-picker-cell-in-view .kora-picker-date-value"
 SEL_HALAMAN = ".kora-pagination-list li.kora-pagination-item"
+
+# Popup pengumuman yang kadang muncul menutupi halaman. Selama modalnya
+# terbuka, klik apa pun di belakangnya tidak tembus -- otomatisasi macet
+# tanpa sebab yang kelihatan. Jadi ditutup dulu sebelum mulai.
+SEL_WADAH_POPUP = ("[role=dialog], .kora-modal, .kora-modal-content,"
+                   " .kora-dialog, .kora-drawer")
+# Tombol penutupnya dicocokkan PERSIS (bukan "mengandung") dan hanya yang
+# ada DI DALAM modal -- kalau tidak, tombol "Oke" lain di halaman ikut kena.
+TEKS_TUTUP_POPUP = ["oke", "ok", "mengerti", "saya mengerti", "saya paham",
+                    "lanjut", "lanjutkan", "tutup", "got it", "selesai"]
+SEL_SILANG_POPUP = ("[aria-label*='close' i], [aria-label*='tutup' i],"
+                    " .kora-modal-close, .kora-drawer-close")
+
+# Tokopedia mengumumkan halaman ini akan dinonaktifkan dan diganti halaman
+# "Performa". Kalau tulisan ini muncul, alatnya perlu direkam ulang sebelum
+# halamannya benar-benar dimatikan.
+TEKS_PERINGATAN_TUTUP = ["akan segera dinonaktifkan", "akan dinonaktifkan"]
 TEKS_TOMBOL_DETAIL = "lihat detail"     # tombol di kolom kanan tiap baris produk
 TEKS_TOMBOL_KEMBALI = "Produk"          # tombol kembali ke daftar produk
 

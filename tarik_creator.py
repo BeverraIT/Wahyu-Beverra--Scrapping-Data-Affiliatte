@@ -279,6 +279,70 @@ def panen(m, endpoint, hanya_periode=True):
     return baris, halaman
 
 
+def tutup_popup(m, putaran=3):
+    """Tutup popup pengumuman yang menutupi halaman.
+
+    Selama modalnya terbuka, klik apa pun di belakangnya tidak tembus dan
+    otomatisasi macet tanpa sebab yang kelihatan. Dipanggil di titik-titik
+    sebelum mengklik sesuatu yang penting.
+
+    Tombolnya dicari HANYA di dalam modal dan teksnya dicocokkan persis --
+    kalau pakai "mengandung", tombol lain di halaman bisa ikut terpencet.
+    """
+    ditutup = 0
+    for _ in range(putaran):
+        ok = m.klik_dari_js(f"""
+            (() => {{
+              // JANGAN pakai offsetParent untuk cek terlihat: elemen
+              // position:fixed -- yaitu semua modal -- selalu memberi null,
+              // jadi popupnya tidak pernah ketemu.
+              const tampak = (e) => {{
+                if (!e) return false;
+                const r = e.getBoundingClientRect();
+                const g = getComputedStyle(e);
+                return r.width > 0 && r.height > 0 &&
+                       g.visibility !== 'hidden' && g.display !== 'none';
+              }};
+              const teks = {json.dumps(K.TEKS_TUTUP_POPUP)};
+              const wadah = [...document.querySelectorAll(
+                  {json.dumps(K.SEL_WADAH_POPUP)})].filter(tampak);
+              for (const w of wadah) {{
+                const tombol = [...w.querySelectorAll('button, [role=button]')]
+                  .filter(tampak);
+                const cocok = tombol.find(
+                  b => teks.includes((b.innerText || '').trim().toLowerCase()));
+                if (cocok) return cocok;
+                const silang = w.querySelector({json.dumps(K.SEL_SILANG_POPUP)});
+                if (tampak(silang)) return silang;
+              }}
+              return null;
+            }})()
+        """)
+        if not ok:
+            break
+        ditutup += 1
+        time.sleep(0.8)
+    if ditutup:
+        catat(f"  {ditutup} popup ditutup")
+    return ditutup
+
+
+def periksa_peringatan_halaman(m):
+    """Tokopedia mengumumkan halaman ini akan dinonaktifkan. Kalau muncul,
+    beri tahu -- alatnya perlu direkam ulang sebelum halamannya mati."""
+    try:
+        teks_halaman = (m.js("document.body.innerText") or "").lower()
+    except Exception:
+        return False
+    if any(p in teks_halaman for p in K.TEKS_PERINGATAN_TUTUP):
+        catat("  ! PERINGATAN dari Tokopedia: halaman Analitik ini akan segera")
+        catat("  ! dinonaktifkan dan diganti halaman 'Performa'. Selama masih")
+        catat("  ! jalan tidak apa-apa, tapi siapkan rekam ulang:")
+        catat("  !     python rekam_endpoint.py")
+        return True
+    return False
+
+
 JS_TOMBOL_DETAIL = (
     "[...document.querySelectorAll('button')].filter(b => (b.innerText || '')"
     ".toLowerCase().includes(%s))" % json.dumps(K.TEKS_TOMBOL_DETAIL)
@@ -345,10 +409,13 @@ def kumpulkan_creator(m, product_id, batas=None):
             break
         sebelum = len(baris)
         if not klik_halaman(m, nomor):
-            break
+            # bisa jadi tertutup popup, bukan benar-benar habis halamannya
+            if not tutup_popup(m) or not klik_halaman(m, nomor):
+                break
         baris, halaman = tunggu_baris(m, K.ENDPOINT_CREATOR, sebelum + 1, batas=12)
         if len(baris) == sebelum:
             # klik kadang termakan waktu tabel masih memuat -- coba sekali lagi
+            tutup_popup(m)
             if not klik_halaman(m, nomor):
                 break
             baris, halaman = tunggu_baris(m, K.ENDPOINT_CREATOR, sebelum + 1, batas=12)
@@ -393,6 +460,8 @@ def jalankan_toko(nama_toko, cfg):
             catat("  ! halaman tidak menarik data produk sama sekali dalam 60 detik")
             m.tangkap_layar("halaman_kosong")
 
+        tutup_popup(m)
+        periksa_peringatan_halaman(m)
         set_periode(m, interaktif=INTERAKTIF)
 
         # --- daftar produk (sudah terurut GMV menurun dari server) ---
@@ -418,6 +487,7 @@ def jalankan_toko(nama_toko, cfg):
                 continue
 
             m.bersihkan_respon()
+            tutup_popup(m)
             if not tunggu_tabel_produk(m, i):
                 catat(f"      ! tabel produk belum siap (butuh {i} baris)")
             if not buka_detail_produk(m, i):
@@ -429,6 +499,7 @@ def jalankan_toko(nama_toko, cfg):
                 print(f"    >> Buka detail produk ini di Chrome: {nama[:60]}")
                 input("    >> Tekan ENTER kalau sudah... ")
             time.sleep(1.0)
+            tutup_popup(m)
 
             creator = kumpulkan_creator(m, pid)
             catat(f"      creator terambil: {len(creator)}")
