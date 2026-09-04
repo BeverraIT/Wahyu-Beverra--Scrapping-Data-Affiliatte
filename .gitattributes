@@ -16,3 +16,7 @@
 # Jangan diutak-atik git
 *.png   binary
 *.xlsx  binary
+
+# File titik: samakan juga biar tidak ikut aturan bawaan tiap laptop
+.gitignore     text eol=lf
+.gitattributes text eol=lf
