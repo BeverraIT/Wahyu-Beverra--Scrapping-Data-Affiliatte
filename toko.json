@@ -1,0 +1,20 @@
+{
+  "_catatan": [
+    "Daftar toko kantor. File ini ikut dibagikan bersama aplikasi.",
+    "shop_id diambil dari URL Affiliate Center: ...?shop_region=ID&shop_id=XXXX",
+    "slug = nama folder profil Chrome, huruf kecil tanpa spasi, harus unik.",
+    "port = port debug Chrome, harus unik antar toko.",
+    "Bisa ditambah lewat tombol 'Tambah Toko' di aplikasi, tidak perlu edit tangan.",
+    "profil_sumber/profil_dir_sumber hanya untuk memindahkan sesi login dari",
+    "Chrome lain yang sudah login (opsional, lihat menu Impor di aplikasi)."
+  ],
+  "toko": [
+    {"nama": "Yarra Store",       "slug": "yarra",    "shop_id": "7494510375204653632", "port": 9331},
+    {"nama": "Caramel Aksesoris", "slug": "caramel",  "shop_id": "7494900284454635689", "port": 9332},
+    {"nama": "Minzo Store",       "slug": "minzo",    "shop_id": "7494798803218893206", "port": 9333},
+    {"nama": "Topi Keren",        "slug": "keren",    "shop_id": "7494784861625289715", "port": 9334},
+    {"nama": "Topi Kece",         "slug": "kece",     "shop_id": "7495148879401355363", "port": 9335},
+    {"nama": "Nomide Store",      "slug": "nomide",   "shop_id": "7495816968582170948", "port": 9336},
+    {"nama": "Moonklaz",          "slug": "moonklaz", "shop_id": "7495145918090479983", "port": 9337}
+  ]
+}

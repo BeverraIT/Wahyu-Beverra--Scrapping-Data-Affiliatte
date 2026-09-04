@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Hasil scraping: berisi data creator pihak ketiga dan token sesi TikTok Shop
+hasil/
+
+# Log & artefak debug: bisa memuat shop_id, cookie, dan isi halaman
+logs/
+debug_screenshots/
+
+# Profil / sesi login Chrome
+profil/
+profiles/
+*.session
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
