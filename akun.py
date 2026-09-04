@@ -92,12 +92,41 @@ def cek(nama_toko, cfg, log=print, batas=60):
     return hasil
 
 
+def _tab_lain_sudah_masuk(m):
+    """True kalau ADA TAB MANA PUN yang sudah sampai di Affiliate Center.
+
+    Sesudah login, Tokopedia sering membuka Affiliate Center di TAB BARU.
+    Mesin kita menempel pada satu tab saja, jadi respons di tab baru itu
+    tidak pernah terlihat dan penungguan tidak pernah selesai walau orangnya
+    sudah berhasil login. Cookie dipakai bersama antar tab, jadi begitu ada
+    tab yang masuk, tab kita tinggal dimuat ulang.
+    """
+    import requests
+    try:
+        daftar = requests.get(f"http://127.0.0.1:{m.port}/json", timeout=3).json()
+    except Exception:
+        return False
+    for t in daftar:
+        if t.get("type") != "page":
+            continue
+        url = (t.get("url") or "").lower()
+        # Harus BERADA di affiliate-id, bukan sekadar menyebutnya. URL halaman
+        # login berbunyi seller-id.../account/login?redirect_url=...affiliate-id...
+        # -- kalau dicocokkan dengan "mengandung", halaman login pun lolos dan
+        # tab kita dimuat ulang terus-terusan padahal belum login.
+        if not url.startswith("https://affiliate-id.tokopedia.com/"):
+            continue
+        if "/account/login" in url or "errorpage" in url:
+            continue
+        return True
+    return False
+
+
 def login(nama_toko, cfg, log=print, batas_menit=10, berhenti=None):
     """Buka Chrome ke Affiliate Center dan tunggu sampai orangnya selesai login.
 
-    Selesai dideteksi sendiri: halaman berhenti di Affiliate Center (bukan
-    halaman login) DAN endpoint product/list menjawab. Jadi tidak perlu
-    menebak-nebak kapan login beres.
+    Selesai dideteksi sendiri dari endpoint product/list yang akhirnya
+    menjawab -- bukan dari orang menekan tombol "sudah selesai".
 
     `berhenti` = fungsi yang mengembalikan True kalau user membatalkan.
     """
@@ -114,16 +143,31 @@ def login(nama_toko, cfg, log=print, batas_menit=10, berhenti=None):
         m.bersihkan_respon()
         m.buka_url(url_toko(cfg), tunggu=4)
         log(f"[{nama_toko}] Silakan login di jendela Chrome yang terbuka.")
-        log(f"[{nama_toko}] Jendela akan menutup sendiri kalau sudah berhasil.")
+        log(f"[{nama_toko}] Boleh login di tab mana saja - jendela akan menutup"
+            f" sendiri kalau sudah berhasil.")
 
         tenggat = time.time() + batas_menit * 60
+        muat_terakhir = time.time()
         while time.time() < tenggat:
             if berhenti and berhenti():
                 return False, "dibatalkan"
+
             baris, _ = T.panen(m, K.ENDPOINT_PRODUK, hanya_periode=False)
             if baris:
                 log(f"[{nama_toko}] Login berhasil, {len(baris)} produk terbaca.")
                 return True, "login berhasil"
+
+            # Login mungkin terjadi di tab lain. Kalau ada tab yang sudah
+            # masuk, muat ulang tab kita supaya datanya ikut lewat sini.
+            if time.time() - muat_terakhir > 8 and _tab_lain_sudah_masuk(m):
+                log(f"[{nama_toko}] Sudah masuk di tab lain, memuat ulang...")
+                try:
+                    m.bersihkan_respon()
+                    m.buka_url(url_toko(cfg), tunggu=4)
+                except Exception as e:
+                    log(f"[{nama_toko}] gagal memuat ulang: {e}")
+                muat_terakhir = time.time()
+
             time.sleep(2)
         return False, f"belum selesai dalam {batas_menit} menit"
     except Exception as e:
