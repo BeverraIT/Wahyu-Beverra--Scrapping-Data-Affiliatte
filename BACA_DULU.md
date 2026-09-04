@@ -138,8 +138,28 @@ Isinya:
 | Sheet | Gunanya |
 |---|---|
 | **SIAP_PASTE** | 500 baris, susunannya persis AFFILIATE 3. Blok-copy langsung |
-| **RINGKASAN** | Cek cepat: produk mana yang creator-nya kurang dari 50 (merah) |
+| **RINGKASAN** | Cek cepat + tempat membetulkan **Kode** produk |
 | **01–10** | Detail per produk, lebih lengkap termasuk Creator ID |
+
+### Membetulkan kolom "Produk Top 10"
+
+Kode produk (`BSBI`, `TRC`, ...) ditebak dari kata terakhir nama produk, jadi
+sering salah — misalnya jadi `TRENDY` atau `KEKINIAN` yang jelas bukan kode.
+
+Betulkannya cukup di **satu tempat**:
+
+1. Buka sheet **RINGKASAN**
+2. Betulkan kolom **Kode** (sel kuning). Kolom "Produk Top 10" di SIAP_PASTE
+   **ikut berubah sendiri** untuk 50 barisnya
+3. Simpan Excel-nya
+
+> Waktu menyalin SIAP_PASTE ke AFFILIATE 3, tempel sebagai **NILAI**
+> (klik kanan → Paste Special → Values, atau Ctrl+Shift+V di Google Sheets).
+> Kalau ditempel biasa, rumusnya ikut terbawa dan jadi error di sana.
+
+Supaya bulan depan tidak perlu dibetulkan lagi, kirim Excel-nya ke admin —
+admin menjalankan `python simpan_kode.py` sekali, dan kodenya tersimpan
+untuk semua orang.
 
 ---
 

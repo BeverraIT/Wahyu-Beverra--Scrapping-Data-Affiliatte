@@ -107,6 +107,20 @@ def kode_produk(prod):
     return (kata[-1].upper() if kata else ""), False
 
 
+# Baris 1-4 RINGKASAN dipakai judul/keterangan, baris 5 header, data mulai 6.
+BARIS_KEPALA_RINGKASAN = 5
+
+
+def rujukan_kode(peringkat):
+    """Rumus yang menunjuk sel Kode di RINGKASAN.
+
+    Kolom "Produk Top 10" di SIAP_PASTE sengaja BUKAN nilai tetap: kode
+    produk sering perlu dibetulkan tangan (yang ditebak dari nama produk
+    hampir selalu salah). Dengan rumus ini, cukup ubah satu sel di RINGKASAN
+    dan 50 baris produk itu ikut berubah."""
+    return f"=RINGKASAN!$B${BARIS_KEPALA_RINGKASAN + peringkat}"
+
+
 def nilai_siap_paste(sumber, creator, nomor, kode, tipe):
     if sumber == "@no":
         return nomor
@@ -190,16 +204,19 @@ def bangun(berkas_json):
     no = 0
     ringkasan = []
     kode_tebakan = []
-    for prod in data["produk"]:
+    for urut, prod in enumerate(data["produk"], 1):
         creator = prod["creator"][:K.JUMLAH_CREATOR_PER_PRODUK]
         kode, pasti = kode_produk(prod)
         if not pasti:
             kode_tebakan.append((prod["peringkat"], prod["product_id"], kode))
         ringkasan.append((prod["peringkat"], kode, prod["nama_produk"],
                           prod["product_id"], len(creator)))
+        # urut (bukan peringkat) supaya selalu cocok dengan urutan baris
+        # yang benar-benar ditulis ke RINGKASAN di bawah
+        rujukan = rujukan_kode(urut)
         for j, c in enumerate(creator, 1):
             no += 1
-            tulis_siap_paste(ws, no + 1, prod, c, j, kode)
+            tulis_siap_paste(ws, no + 1, prod, c, j, rujukan)
     lebar_otomatis(ws)
 
     # ---------- RINGKASAN ----------
@@ -213,12 +230,27 @@ def bangun(berkas_json):
     wr.append([])
     wr.append(kepala)
     gaya_header(wr, len(kepala), baris=5)
-    for i, (pk, kd, nm, pid, jml) in enumerate(ringkasan, 6):
+    for i, (pk, kd, nm, pid, jml) in enumerate(ringkasan, BARIS_KEPALA_RINGKASAN + 1):
         status = "LENGKAP" if jml >= K.JUMLAH_CREATOR_PER_PRODUK else f"KURANG {K.JUMLAH_CREATOR_PER_PRODUK - jml}"
         tulis_baris(wr, i, [pk, kd, nm, pid, jml, status])
         wr.cell(row=i, column=4).number_format = "@"
+        # Kolom Kode ditandai kuning: ini satu-satunya sel yang boleh diubah
+        # tangan, dan SIAP_PASTE mengikutinya lewat rumus.
+        sel_kode = wr.cell(row=i, column=2)
+        sel_kode.fill = PatternFill("solid", fgColor=KUNING)
+        sel_kode.font = Font(size=10, bold=True)
+        sel_kode.alignment = Alignment(horizontal="center")
         if status != "LENGKAP":
             wr.cell(row=i, column=6).fill = PatternFill("solid", fgColor="FFC7CE")
+
+    baris_catatan = BARIS_KEPALA_RINGKASAN + len(ringkasan) + 2
+    wr.cell(row=baris_catatan, column=1,
+            value="Kolom Kode (kuning) boleh diubah. Kolom \"Produk Top 10\" di "
+                  "SIAP_PASTE ikut berubah sendiri.").font = Font(bold=True, color=BIRU)
+    wr.cell(row=baris_catatan + 1, column=1,
+            value="Waktu menyalin ke AFFILIATE 3, tempel sebagai NILAI "
+                  "(Paste Special > Values / Ctrl+Shift+V) supaya rumusnya "
+                  "tidak ikut terbawa.").font = Font(color="C00000")
     lebar_otomatis(wr)
 
     # ---------- per produk ----------
@@ -251,11 +283,15 @@ def main():
         keluar, jumlah, tebakan = bangun(b)
         print(f"[OK] {os.path.basename(keluar)} - {jumlah} baris")
         if tebakan:
-            print(f"\n[!] {len(tebakan)} kode 'Produk Top 10' masih TEBAKAN")
-            print("[!] (dipakai kata terakhir nama produk). Betulkan di")
-            print("[!] konfigurasi.py -> KODE_PRODUK, lalu jalankan ulang:")
+            print(f"\n[!] {len(tebakan)} kode 'Produk Top 10' masih TEBAKAN,")
+            print("[!] diambil dari kata terakhir nama produk:")
             for pk, pid, kode in tebakan:
-                print(f"      \"{pid}\": \"{kode}\",   # produk #{pk}")
+                print(f"      produk #{pk}: {kode}")
+            print("[!]")
+            print("[!] Betulkan di Excel: sheet RINGKASAN, kolom Kode (kuning).")
+            print("[!] SIAP_PASTE ikut berubah sendiri. Simpan Excel-nya, lalu:")
+            print("[!]     python simpan_kode.py")
+            print("[!] supaya bulan depan tidak perlu dibetulkan lagi.")
 
 
 if __name__ == "__main__":

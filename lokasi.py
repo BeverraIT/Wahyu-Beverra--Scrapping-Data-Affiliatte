@@ -55,6 +55,9 @@ DIR_SS = os.path.join(DIR_KERJA, "debug_screenshots")
 # Daftar toko kantor: ikut dibagikan bersama aplikasi (shop_id bukan rahasia)
 # dan dilacak git, jadi cukup `git pull` untuk dapat toko baru.
 BERKAS_TOKO = os.path.join(DIR_KERJA, "toko.json")
+# Kode "Produk Top 10" per product_id. Ikut git supaya sekali dibetulkan,
+# semua orang kantor dapat kode yang sama lewat Perbarui.bat.
+BERKAS_KODE = os.path.join(DIR_KERJA, "kode_produk.json")
 # Toko yang ditambahkan sendiri lewat aplikasi. Sengaja di luar folder repo:
 # kalau ikut terlacak git, tiap orang yang menambah toko bakal kena konflik
 # waktu `git pull`.

@@ -1,0 +1,11 @@
+{
+ "_catatan": "Kode kolom 'Produk Top 10'. Betulkan lewat Excel (kolom Kode kuning di sheet RINGKASAN) lalu jalankan simpan_kode.py, atau ubah langsung di sini.",
+ "kode": {
+  "1729434610721589824": "ZQ",
+  "1729472140351539776": "TRC",
+  "1729545071402453568": "PTAA",
+  "1729615139944368704": "BSBI",
+  "1731963304560723520": "PTAA27",
+  "1733572423500990016": "PTAF"
+ }
+}

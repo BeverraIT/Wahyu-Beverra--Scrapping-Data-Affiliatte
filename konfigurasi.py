@@ -280,18 +280,28 @@ RUPIAH_SEBAGAI_TEKS = False
 # Kalau product_id tidak terdaftar di sini, dipakai KATA TERAKHIR nama produk
 # (huruf besar) -- itu cuma tebakan, jadi periksa daftar yang dicetak
 # generate_excel.py dan betulkan yang salah di sini.
-KODE_PRODUK = {
-    "1729615139944368704": "BSBI",
-    "1730523414991636032": "",        # nama berakhir "Trendy" - isi kode aslinya
-    "1729472140351539776": "TRC",
-    "1731963304560723520": "PTAA27",
-    "1729545071402453568": "PTAA",
-    "1733572423500990016": "PTAF",
-    "1731130957486917184": "",        # nama berakhir "Kekinian"
-    "1729722949986780736": "",        # nama berakhir "Spons"
-    "1731077695889376832": "",        # nama berakhir "Matahari"
-    "1729434610721589824": "ZQ",
-}
+def muat_kode_produk():
+    """Kode pendek "Produk Top 10" per product_id, dari kode_produk.json.
+
+    Disimpan di berkas terpisah (bukan di kode) karena memang sering
+    dibetulkan tangan: tebakan dari nama produk hampir selalu salah.
+    Sesudah dibetulkan di Excel, simpan_kode.py menuliskannya ke sini
+    supaya bulan depan tidak perlu dibetulkan lagi.
+    """
+    return _muat_json(L.BERKAS_KODE, {}).get("kode", {})
+
+
+def simpan_kode_produk(kode):
+    isi = _muat_json(L.BERKAS_KODE, {})
+    isi["_catatan"] = ("Kode kolom 'Produk Top 10'. Betulkan lewat Excel"
+                       " (kolom Kode kuning di sheet RINGKASAN) lalu jalankan"
+                       " simpan_kode.py, atau ubah langsung di sini.")
+    isi["kode"] = kode
+    with open(L.BERKAS_KODE, "w", encoding="utf-8") as f:
+        json.dump(isi, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+
+KODE_PRODUK = muat_kode_produk()
 
 # ---------- Sheet per produk (01..10): lebih lengkap, termasuk ID ----------
 # kiri = judul kolom di Excel, kanan = daftar jalur field di JSON creator.

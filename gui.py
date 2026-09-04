@@ -464,10 +464,12 @@ class Aplikasi(tk.Tk):
             if tebakan:
                 self._kirim("log", tag="galat", teks=(
                     f"  ! {len(tebakan)} kode 'Produk Top 10' masih tebakan"
-                    " (dari kata terakhir nama produk)."
-                    " Betulkan di konfigurasi.py -> KODE_PRODUK:"))
+                    " (diambil dari kata terakhir nama produk):"))
                 for pk, pid, kode in tebakan:
-                    self._kirim("log", teks=f'      "{pid}": "{kode}",   # produk #{pk}')
+                    self._kirim("log", teks=f"      produk #{pk}: {kode}")
+                self._kirim("log", teks=(
+                    "  ! Betulkan di Excel: sheet RINGKASAN, kolom Kode"
+                    " (kuning). SIAP_PASTE ikut berubah sendiri."))
 
     def _tambah_toko(self):
         nama = simpledialog.askstring(JUDUL, "Nama toko:", parent=self)
