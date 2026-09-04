@@ -437,10 +437,12 @@ class Aplikasi(tk.Tk):
             "port_cdp": port, "aktif": True,
             "profil_sumber": "", "profil_dir_sumber": "Default",
         }
-        K.simpan_toko(K.TOKO)
+        K.tambah_toko_lokal(nama, K.TOKO[nama])
         self._muat_daftar_toko()
         self._tulis(f"Toko '{nama}' ditambahkan (port {port}). "
                     f'Klik "Login Toko" di barisnya.', "bagus")
+        self._tulis("Toko ini tersimpan di komputer ini saja. Supaya dipakai "
+                    "sekantor, minta admin memasukkannya ke toko.json.", None)
 
 
 def kebutuhan_kurang():

@@ -135,6 +135,38 @@ sudah dicocokkan persis dengan header AFFILIATE 3 (16 kolom A-P). Kode pendek
 kolom "Produk Top 10" diisi di `KODE_PRODUK`; yang belum diisi ditebak dari
 kata terakhir nama produk dan selalu dilaporkan waktu Excel dibuat.
 
+## Pelajaran soal file .bat
+
+Dua kali kena, keduanya gejalanya "jendela CMD hilang begitu saja":
+
+- **File `.bat` WAJIB CRLF.** `Jalankan.bat` sempat tersimpan dengan akhir baris
+  LF saja. `cmd.exe` salah membaca blok `if (...)` bertingkat, sebagian perintah
+  jalan (pip sempat mengunduh) lalu sisanya tertelan dan jendelanya tutup tanpa
+  pesan apa pun. Cek cepat:
+
+  ```
+  python cek_bat.py
+  ```
+
+  Kalau ada file yang dilaporkan LF, file itu rusak untuk cmd -- buka di
+  Notepad++ / VS Code, ganti akhir barisnya ke CRLF, simpan.
+
+  Struktur `label + goto` dipakai sekarang karena jauh lebih tahan daripada
+  `if (...)` bertingkat, yang paling gampang salah baca kalau akhir barisnya keliru.
+
+- **Jangan pakai file penanda "sudah terpasang".** Versi pertama membuat file
+  `.siap` setelah pip berhasil. File itu ikut tersalin waktu folder aplikasi
+  dibagikan, jadi di PC kantor pemasangan dilewati padahal `requests` belum ada
+  di sana. Penanda mencatat keadaan komputer ASAL, bukan komputer yang sedang
+  dipakai. Sekarang kebutuhannya ditanyakan langsung ke Python:
+
+  ```
+  %PY% -c "import requests, websocket, openpyxl" >nul 2>&1
+  ```
+
+  (Kalau masih ada file `.siap` tertinggal di folder, boleh dihapus. Sudah
+  tidak dipakai.)
+
 ## Pelajaran lama yang sudah dipasang di kode
 
 Diambil dari mesin Tarik Omset, jangan diulang lagi sakitnya:

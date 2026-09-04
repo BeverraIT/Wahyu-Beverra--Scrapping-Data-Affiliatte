@@ -21,3 +21,10 @@ profiles/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Penanda lama yang sempat bikin masalah -- jangan pernah ikut tersalin
+.siap
+
+# Toko yang ditambahkan sendiri lewat aplikasi (bukan daftar kantor).
+# Dipisah supaya 'git pull' tidak pernah bentrok dengan toko.json.
+toko_lokal.json

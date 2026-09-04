@@ -52,8 +52,13 @@ DIR_MENTAH = os.path.join(DIR_HASIL, "mentah")
 DIR_LOG = os.path.join(DIR_KERJA, "logs")
 DIR_SS = os.path.join(DIR_KERJA, "debug_screenshots")
 
-# Daftar toko: ikut dibagikan bersama aplikasi (shop_id bukan rahasia).
+# Daftar toko kantor: ikut dibagikan bersama aplikasi (shop_id bukan rahasia)
+# dan dilacak git, jadi cukup `git pull` untuk dapat toko baru.
 BERKAS_TOKO = os.path.join(DIR_KERJA, "toko.json")
+# Toko yang ditambahkan sendiri lewat aplikasi. Sengaja di luar folder repo:
+# kalau ikut terlacak git, tiap orang yang menambah toko bakal kena konflik
+# waktu `git pull`.
+BERKAS_TOKO_LOKAL = os.path.join(DIR_DATA, "toko_lokal.json")
 # Setelan pribadi (toko mana yang dicentang, periode terakhir): per komputer.
 BERKAS_SETELAN = os.path.join(DIR_DATA, "setelan.json")
 

@@ -1,0 +1,18 @@
+# Akhir baris dipaksa per jenis file, tidak bergantung setelan git tiap orang.
+#
+# INI PENTING. Tanpa baris .bat di bawah, file batch bisa ter-checkout dengan
+# akhir baris LF di laptop yang core.autocrlf-nya beda. cmd.exe salah membaca
+# blok if(...) dan skripnya berhenti di tengah tanpa pesan apa pun -- persis
+# kejadian di PC kantor: pip sempat mengunduh lalu jendelanya hilang begitu saja.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# Skrip Python dan dokumen: LF di dalam repo, aman di semua sistem.
+*.py    text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+
+# Jangan diutak-atik git
+*.png   binary
+*.xlsx  binary

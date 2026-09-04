@@ -18,36 +18,43 @@ Kalau belum ada, unduh dari <https://www.python.org/downloads/>.
 
 Chrome juga harus sudah terpasang.
 
-### 2. Salin folder aplikasi
+### 2. Pasang Git (sekali seumur hidup)
 
-Copy folder ini ke komputermu, taruh di mana saja yang gampang dicari
-(misalnya `D:\Aplikasi\TarikCreator`).
+Unduh dari <https://git-scm.com/download/win>. Pilihan bawaannya sudah benar,
+tinggal **Next** terus sampai selesai.
 
-**Yang perlu ikut disalin:**
+Git dipakai supaya aplikasinya bisa diperbarui sendiri — tidak perlu
+kirim-kiriman file lagi setiap ada perbaikan.
 
-```
-Jalankan.bat        BACA_DULU.md        toko.json
-*.py  (semua file Python)
-```
+### 3. Ambil aplikasinya
 
-**Yang JANGAN ikut disalin** — ini punya komputer asalnya, dan kalau ikut
-terbawa malah bikin error:
+Buka **Command Prompt**, lalu ketik (ganti `<alamat-repo>` dengan alamat dari
+admin):
 
 ```
-__pycache__\        hasil\        logs\        debug_screenshots\
+cd /d D:\Aplikasi
+git clone <alamat-repo> TarikCreator
+cd TarikCreator
 ```
 
-> Jangan menyalin folder profil login dari komputer orang lain. Tiap orang
-> login sendiri lewat aplikasi — itu bagian dari langkah berikutnya.
+Kalau diminta username/password GitHub, pakai akun yang sudah didaftarkan
+admin ke repo ini.
 
-### 3. Buka aplikasinya
+> **Jangan menyalin folder aplikasi dari komputer orang lain.** Selain
+> ketinggalan versi, file-file sisa dari komputer itu bisa bikin error.
+> Pakai `git clone`, sekali saja.
+
+Folder profil login juga tidak boleh disalin dari siapa pun — tiap orang
+login sendiri lewat aplikasi, itu langkah berikutnya.
+
+### 4. Buka aplikasinya
 
 Klik dua kali **`Jalankan.bat`**.
 
 Pertama kali dibuka akan agak lama (sedang menyiapkan kebutuhannya).
 Berikutnya langsung terbuka.
 
-### 4. Login toko
+### 5. Login toko
 
 Di daftar toko, tiap baris ada tombol **Login Toko**.
 
@@ -63,6 +70,20 @@ Ulangi untuk tiap toko yang jadi tanggung jawabmu. Toko yang tidak kamu
 pegang boleh dibiarkan tidak login.
 
 ---
+
+## Kalau ada pembaruan aplikasi
+
+Klik **`Perbarui.bat`**. Dia mengambil versi terbaru lalu langsung membuka
+aplikasinya. Cukup itu — tidak perlu kirim-kiriman file.
+
+Kalau muncul pesan gagal karena "ada file yang berubah", dan kamu memang tidak
+pernah mengedit kodenya, jalankan di Command Prompt dalam folder aplikasi:
+
+```
+git restore .
+```
+
+lalu klik `Perbarui.bat` lagi.
 
 ## Pemakaian sehari-hari
 
@@ -128,9 +149,12 @@ Log lengkap juga tersimpan di folder `logs/`.
 3. Di aplikasi, klik **Tambah Toko**, isi namanya dan angka tadi
 4. Klik **Login Toko** di baris yang baru muncul
 
-Toko yang ditambahkan tersimpan di `toko.json`. Kalau ingin semua orang
-kantor ikut punya toko itu, bagikan file `toko.json`-nya — isinya cuma nama
-dan shop_id, **bukan** data login.
+Toko yang kamu tambahkan tersimpan **di komputermu saja**, sengaja dipisah
+supaya `Perbarui.bat` tidak pernah bentrok.
+
+Kalau toko itu perlu dipakai semua orang kantor, kirim nama + shop_id-nya ke
+admin. Admin memasukkannya ke daftar bersama, dan yang lain cukup klik
+`Perbarui.bat` untuk mendapatkannya.
 
 ---
 

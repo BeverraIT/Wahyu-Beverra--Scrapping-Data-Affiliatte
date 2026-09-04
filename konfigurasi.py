@@ -54,12 +54,22 @@ def simpan_setelan(setelan):
 
 
 def muat_toko():
-    """Bangun ulang TOKO dari toko.json + setelan pribadi."""
+    """Bangun ulang TOKO dari toko.json (daftar kantor, ikut git)
+    + toko_lokal.json (tambahan sendiri, di luar git) + setelan pribadi."""
     data = _muat_json(L.BERKAS_TOKO, _BAWAAN)
+    lokal = _muat_json(L.BERKAS_TOKO_LOKAL, {"toko": []})
     setelan = muat_setelan()
     dicentang = setelan.get("toko_aktif")      # None = semua dianggap aktif
+
+    gabung = list(data.get("toko") or [])
+    sudah = {(t.get("nama") or "").strip().lower() for t in gabung}
+    for t in (lokal.get("toko") or []):
+        # kalau kantor akhirnya menambahkan toko yang sama, versi kantor menang
+        if (t.get("nama") or "").strip().lower() not in sudah:
+            gabung.append(t)
+
     hasil = {}
-    for i, t in enumerate(data.get("toko") or []):
+    for i, t in enumerate(gabung):
         nama = (t.get("nama") or "").strip()
         slug = (t.get("slug") or "").strip() or f"toko{i + 1}"
         if not nama:
@@ -78,18 +88,23 @@ def muat_toko():
     return hasil
 
 
-def simpan_toko(daftar):
-    """Tulis kembali toko.json dari dict TOKO (dipakai 'Tambah Toko')."""
-    isi = _muat_json(L.BERKAS_TOKO, {})
-    isi["toko"] = [
-        {"nama": n, "slug": c["slug"], "shop_id": c["shop_id"],
-         "port": c["port_cdp"],
-         **({"profil_sumber": c["profil_sumber"]} if c.get("profil_sumber") else {}),
-         **({"profil_dir_sumber": c["profil_dir_sumber"]}
-            if c.get("profil_sumber") else {})}
-        for n, c in daftar.items()
-    ]
-    with open(L.BERKAS_TOKO, "w", encoding="utf-8") as f:
+def tambah_toko_lokal(nama, cfg):
+    """Simpan toko tambahan ke toko_lokal.json (di luar git).
+
+    Sengaja TIDAK menulis ke toko.json: file itu dilacak git, jadi kalau
+    tiap orang menambah toko di situ, `git pull` bakal bentrok terus.
+    Untuk membagikan toko ke semua orang kantor, pindahkan entrinya ke
+    toko.json lalu commit + push.
+    """
+    isi = _muat_json(L.BERKAS_TOKO_LOKAL, {"toko": []})
+    daftar = [t for t in (isi.get("toko") or [])
+              if (t.get("nama") or "").strip().lower() != nama.strip().lower()]
+    daftar.append({"nama": nama, "slug": cfg["slug"],
+                   "shop_id": cfg["shop_id"], "port": cfg["port_cdp"]})
+    isi["toko"] = daftar
+    isi["_catatan"] = ("Toko tambahan di komputer ini saja, tidak ikut git."
+                       " Untuk dipakai sekantor, pindahkan ke toko.json.")
+    with open(L.BERKAS_TOKO_LOKAL, "w", encoding="utf-8") as f:
         json.dump(isi, f, ensure_ascii=False, indent=1)
 
 
