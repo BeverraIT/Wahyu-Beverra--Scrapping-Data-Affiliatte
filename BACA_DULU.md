@@ -59,9 +59,11 @@ Berikutnya langsung terbuka.
 Di daftar toko, tiap baris ada tombol **Login Toko**.
 
 1. Klik **Login Toko** di toko yang mau kamu pakai
-2. Chrome terbuka di halaman Affiliate Center
+2. Chrome terbuka di halaman login Tokopedia
 3. Login seperti biasa
-4. **Jendelanya akan menutup sendiri** kalau sudah berhasil — tidak perlu
+4. Kalau setelah login kamu mendarat di **Seller Center** (bukan Affiliate
+   Center), **biarkan saja** — aplikasi akan membuka Affiliate Center sendiri
+5. **Jendelanya akan menutup sendiri** kalau sudah berhasil — tidak perlu
    klik apa-apa lagi di aplikasi
 
 Cukup sekali. Sesinya tersimpan, besok-besok tinggal pakai.

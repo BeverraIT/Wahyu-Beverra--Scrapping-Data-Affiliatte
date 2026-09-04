@@ -92,14 +92,32 @@ def cek(nama_toko, cfg, log=print, batas=60):
     return hasil
 
 
-def _tab_lain_sudah_masuk(m):
-    """True kalau ADA TAB MANA PUN yang sudah sampai di Affiliate Center.
+# Halaman "sudah di dalam" bisa di dua domain ini.
+_HOST_MASUK = (
+    "https://affiliate-id.tokopedia.com/",
+    "https://seller-id.tokopedia.com/",
+)
 
-    Sesudah login, Tokopedia sering membuka Affiliate Center di TAB BARU.
-    Mesin kita menempel pada satu tab saja, jadi respons di tab baru itu
-    tidak pernah terlihat dan penungguan tidak pernah selesai walau orangnya
-    sudah berhasil login. Cookie dipakai bersama antar tab, jadi begitu ada
-    tab yang masuk, tab kita tinggal dimuat ulang.
+
+def _sudah_masuk(m):
+    """True kalau ada tab yang sudah berada di halaman DALAM, bukan login.
+
+    Dua hal bikin penungguan tidak pernah selesai kalau ini tidak dicek:
+
+    1. Sesudah login, Tokopedia sering TIDAK kembali ke Affiliate Center --
+       redirect_url-nya mengarah ke seller-id.tokopedia.com/homepage, jadi
+       mendaratnya di Seller Center.
+    2. Halaman itu kadang dibuka di TAB BARU, sedangkan mesin kita menempel
+       pada satu tab saja.
+
+    Cookie dipakai bersama antar tab dan antar kedua domain itu, jadi begitu
+    orangnya masuk ke mana pun, tab kita tinggal diarahkan ke Affiliate
+    Center.
+
+    Pencocokannya pakai awalan URL, bukan "mengandung": URL halaman login
+    berbunyi seller-id.../account/login?redirect_url=...affiliate-id...,
+    jadi kalau dicocokkan dengan "mengandung", halaman login pun lolos dan
+    tab dimuat ulang terus padahal belum login.
     """
     import requests
     try:
@@ -110,13 +128,9 @@ def _tab_lain_sudah_masuk(m):
         if t.get("type") != "page":
             continue
         url = (t.get("url") or "").lower()
-        # Harus BERADA di affiliate-id, bukan sekadar menyebutnya. URL halaman
-        # login berbunyi seller-id.../account/login?redirect_url=...affiliate-id...
-        # -- kalau dicocokkan dengan "mengandung", halaman login pun lolos dan
-        # tab kita dimuat ulang terus-terusan padahal belum login.
-        if not url.startswith("https://affiliate-id.tokopedia.com/"):
+        if not url.startswith(_HOST_MASUK):
             continue
-        if "/account/login" in url or "errorpage" in url:
+        if "/account/" in url or "errorpage" in url:
             continue
         return True
     return False
@@ -143,11 +157,13 @@ def login(nama_toko, cfg, log=print, batas_menit=10, berhenti=None):
         m.bersihkan_respon()
         m.buka_url(url_toko(cfg), tunggu=4)
         log(f"[{nama_toko}] Silakan login di jendela Chrome yang terbuka.")
-        log(f"[{nama_toko}] Boleh login di tab mana saja - jendela akan menutup"
-            f" sendiri kalau sudah berhasil.")
+        log(f"[{nama_toko}] Kalau sesudah login mendarat di Seller Center,"
+            f" biarkan saja - Affiliate Center dibuka sendiri.")
+        log(f"[{nama_toko}] Jendela menutup sendiri kalau sudah berhasil.")
 
         tenggat = time.time() + batas_menit * 60
         muat_terakhir = time.time()
+        percobaan = 0
         while time.time() < tenggat:
             if berhenti and berhenti():
                 return False, "dibatalkan"
@@ -157,16 +173,26 @@ def login(nama_toko, cfg, log=print, batas_menit=10, berhenti=None):
                 log(f"[{nama_toko}] Login berhasil, {len(baris)} produk terbaca.")
                 return True, "login berhasil"
 
-            # Login mungkin terjadi di tab lain. Kalau ada tab yang sudah
-            # masuk, muat ulang tab kita supaya datanya ikut lewat sini.
-            if time.time() - muat_terakhir > 8 and _tab_lain_sudah_masuk(m):
-                log(f"[{nama_toko}] Sudah masuk di tab lain, memuat ulang...")
+            # Orangnya mungkin sudah masuk tapi mendarat di Seller Center,
+            # atau di tab lain. Arahkan tab kita ke Affiliate Center.
+            if time.time() - muat_terakhir > 8 and _sudah_masuk(m):
+                percobaan += 1
+                log(f"[{nama_toko}] Sudah masuk, membuka Affiliate Center"
+                    f" (percobaan {percobaan})...")
                 try:
                     m.bersihkan_respon()
-                    m.buka_url(url_toko(cfg), tunggu=4)
+                    m.buka_url(url_toko(cfg), tunggu=5)
                 except Exception as e:
-                    log(f"[{nama_toko}] gagal memuat ulang: {e}")
+                    log(f"[{nama_toko}] gagal membuka: {e}")
                 muat_terakhir = time.time()
+
+                # Sudah masuk tapi Affiliate Center tetap tidak mau terbuka:
+                # biasanya akunnya benar tapi bukan pemegang toko ini.
+                if percobaan == 4:
+                    log(f"[{nama_toko}] Sudah masuk tapi Affiliate Center belum"
+                        f" mau terbuka setelah beberapa kali.")
+                    log(f"[{nama_toko}] Periksa: akun yang dipakai login memang"
+                        f" pemegang toko ini? (shop_id {cfg['shop_id']})")
 
             time.sleep(2)
         return False, f"belum selesai dalam {batas_menit} menit"
