@@ -159,7 +159,7 @@ class Aplikasi(tk.Tk):
             # baru ketahuan setelah tombol Cek. Jangan tulis "sudah login"
             # di sini, nanti orang percaya padahal sesinya sudah habis.
             ada = akun.sudah_ada_profil(cfg)
-            lbl = ttk.Label(baris, width=26,
+            lbl = ttk.Label(baris, width=38,
                             text="sudah pernah login" if ada else "belum login",
                             foreground="#666" if ada else WARNA_STATUS[akun.BELUM_ADA])
             lbl.pack(side="left")
@@ -294,7 +294,7 @@ class Aplikasi(tk.Tk):
             ok, pesan = akun.login(nama, cfg, log=catat,
                                    berhenti=self.minta_berhenti.is_set)
             self._kirim("status_toko", toko=nama,
-                        teks="sudah login" if ok else pesan[:26],
+                        teks="sudah login" if ok else pesan.splitlines()[0][:38],
                         kode=akun.SIAP if ok else akun.BELUM_LOGIN)
             self._kirim("log", teks=f"[{nama}] {pesan}",
                         tag="bagus" if ok else "galat")
@@ -318,7 +318,7 @@ class Aplikasi(tk.Tk):
                             kode=akun.LAMBAT)
                 h = akun.cek(n, cfg, log=catat)
                 self._kirim("status_toko", toko=n,
-                            teks=f"{h['status']} - {h['pesan']}"[:30],
+                            teks=f"{h['status']} - {h['pesan']}".splitlines()[0][:38],
                             kode=h["status"])
                 self._kirim("log", teks=f"[{n}] {h['status']}: {h['pesan']}",
                             tag="bagus" if h["status"] == akun.SIAP else "galat")

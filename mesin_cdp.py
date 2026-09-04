@@ -211,13 +211,11 @@ class Mesin:
         self.kirim("Network.enable")
 
     def _jalankan_chrome(self):
-        asal = os.path.join(self.profil, self.profil_dir or "Default")
-        if not os.path.isdir(asal):
-            raise RuntimeError(
-                "Toko ini belum pernah login di komputer ini.\n"
-                'Buka aplikasinya (Jalankan.bat), lalu klik "Login Toko" di '
-                "baris toko ini.\n"
-                f"(folder profil yang dicari: {asal})")
+        # JANGAN menolak kalau folder profilnya belum ada. Chrome membuatnya
+        # sendiri saat dijalankan, dan tombol "Login Toko" memang dipakai
+        # justru waktu profilnya belum ada -- kalau ditolak di sini, login
+        # pertama jadi mustahil (ayam dan telur).
+        os.makedirs(self.profil, exist_ok=True)
         _siapkan_preferences(self.profil, self.profil_dir)
         args = [
             _cari_chrome(),
