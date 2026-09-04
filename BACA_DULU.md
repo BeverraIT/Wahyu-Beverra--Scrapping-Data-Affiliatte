@@ -120,9 +120,16 @@ lalu klik `Perbarui.bat` lagi.
 5. Tunggu. Satu toko sekitar **2–3 menit**, jadi 6 toko sekitar 15 menit
 6. Klik **Buka Folder Hasil**
 
-Chrome akan terbuka-tutup sendiri selama proses. **Jangan ditutup atau
-diklik-klik** — biarkan saja sampai selesai. Kamu tetap bisa memakai Chrome
-biasamu untuk kerja lain; aplikasi ini memakai jendela Chrome-nya sendiri.
+**Browser bekerja di latar belakang**, jadi tidak ada jendela Chrome yang
+muncul dan mengganggu — kamu bisa terus memakai komputernya seperti biasa.
+
+Kalau ingin melihat prosesnya, centang **"Tampilkan browser saat menarik
+data"** di bagian Periode. Kalau ditampilkan, **jangan ditutup atau
+diklik-klik** — biarkan sampai selesai.
+
+> **Login selalu ditampilkan**, apa pun setelan ini. Waktu klik Login Toko,
+> jendela Chrome muncul di tengah layar — kamu memang harus bisa mengetik di
+> situ.
 
 Kolom **Catatan** di bawah menunjukkan apa yang sedang dikerjakan. Kalau ada
 yang gagal, alasannya muncul di situ dengan tulisan merah.

@@ -10,13 +10,18 @@ toko bermasalah setelah menunggu penarikan tujuh toko.
 Isi pengecekannya ada di akun.py, dipakai bareng dengan tombol "Cek" di
 aplikasi supaya hasil keduanya tidak pernah berbeda.
 
-Jendelanya HARUS kelihatan. Sudah diuji: kalau dijalankan di luar layar
-(OFFSCREEN=True), halaman ini tidak menarik data sama sekali -- Chrome
-menganggap jendelanya tidak terlihat dan menahan fetch-nya. Catatan lama
-"jalan headed-tapi-di-luar-layar" dari mesin Tarik Omset TIDAK berlaku di sini.
+Jalan di latar belakang (headless) mengikuti setelan aplikasi. Pakai
+--tampil kalau mau melihat halamannya, mis. waktu mencari tahu kenapa
+sebuah toko gagal.
+
+CATATAN: menyembunyikan dengan cara memindahkan jendela ke luar layar
+(OFFSCREEN=True) TIDAK bisa -- sudah diuji, halamannya tidak menarik data
+sama sekali karena Chrome menahan halaman yang dianggap tak terlihat.
+Headless beda: halamannya tetap dirender.
 
   python cek_toko.py
   python cek_toko.py --toko kece
+  python cek_toko.py --tampil
 """
 import sys
 import time
@@ -26,6 +31,8 @@ import konfigurasi as K
 
 
 def main():
+    if "--tampil" in sys.argv:
+        K.TAMPILKAN_BROWSER = True
     daftar = K.toko_dari_argv(sys.argv)
     print(f"Cek {len(daftar)} toko (periode bawaan halaman, bukan periode target)\n")
     semua = []

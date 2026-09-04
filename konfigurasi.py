@@ -172,8 +172,23 @@ CHROME_PATH_KANDIDAT = [
     os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
 ]
 PORT_CDP = 9333
-# Jendela dibuka di luar layar (bukan headless) -- headless bikin unduhan mati.
+
+# Browser bekerja di latar belakang (headless) waktu menarik data, supaya
+# tidak mengganggu orang yang sedang memakai komputernya.
+# LOGIN SELALU DITAMPILKAN, apa pun nilai ini -- orangnya harus bisa mengetik.
+#
+# Menyembunyikannya dengan cara MEMINDAHKAN jendela ke luar layar TIDAK bisa:
+# sudah diuji, Affiliate Center tidak menarik data sama sekali (0 produk
+# setelah 35 detik) karena Chrome menahan halaman yang dianggap tak terlihat.
+# Headless beda: halamannya tetap dirender, cuma tidak ditampilkan.
+TAMPILKAN_BROWSER = False
+
+# Peninggalan cara lama. Biarkan False -- lihat penjelasan di atas.
 OFFSCREEN = False
+
+# Taruh jendela di tengah layar waktu ditampilkan, supaya tidak muncul di
+# pojok atau di luar jangkauan monitor.
+JENDELA_TENGAH = True
 # Posisi & ukuran jendela waktu OFFSCREEN = False.
 # Chrome mengingat posisi jendela terakhir di dalam profil, jadi bekas run
 # offscreen bikin jendela tetap tak kelihatan. Nilai ini dipakai untuk

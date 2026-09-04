@@ -135,6 +135,53 @@ sudah dicocokkan persis dengan header AFFILIATE 3 (16 kolom A-P). Kode pendek
 kolom "Produk Top 10" diisi di `KODE_PRODUK`; yang belum diisi ditebak dari
 kata terakhir nama produk dan selalu dilaporkan waktu Excel dibuat.
 
+## Browser di latar belakang
+
+`TAMPILKAN_BROWSER = False` (bawaan) menjalankan Chrome dengan
+`--headless=new`: halamannya tetap dirender penuh, cuma tidak ditampilkan.
+
+**Jangan menggantinya dengan memindahkan jendela ke luar layar.** Sudah
+diuji dan gagal: dengan `OFFSCREEN = True`, Affiliate Center tidak menarik
+data sama sekali (0 produk setelah 35 detik untuk semua toko) karena Chrome
+menahan halaman yang dianggap tidak terlihat. Headless beda -- halamannya
+tetap dirender.
+
+### Terukur: headless justru LEBIH andal
+
+Diuji dengan halaman yang menghitung `requestAnimationFrame`,
+`IntersectionObserver`, dan `setInterval` selama 6 detik:
+
+| Mode | rAF | IntersectionObserver | setInterval |
+|---|---|---|---|
+| tampil, tertutup jendela lain | 1 | 0 | 8 |
+| di luar layar | 1 | 0 | 8 |
+| **headless** | **483** | **1** | **80** |
+
+Jendela yang "tampil" pun ikut ditahan Chrome kalau tertutup jendela lain --
+sama seperti yang di luar layar. Itu persis mekanisme yang dipakai tabel
+Affiliate Center untuk memuat data. Jadi headless bukan cuma sama baiknya,
+tapi lebih andal daripada jendela tampil yang bisa tertimpa.
+
+### User-Agent headless disamarkan
+
+Headless mengaku `HeadlessChrome/152.0.0.0` di User-Agent. Situs seperti
+Tokopedia bisa memperlakukannya beda, dan gejalanya bakal membingungkan:
+jalan waktu ditampilkan, gagal waktu di latar belakang. `_samarkan_headless()`
+menggantinya jadi `Chrome/...` lewat `Network.setUserAgentOverride`, versinya
+diambil dari UA yang ada supaya ikut terbarui sendiri.
+
+Tiga tempat memaksa `tampil=True` karena butuh orangnya melihat/mengetik:
+
+| Tempat | Alasan |
+|---|---|
+| `akun.login()` | orangnya mengetik akun dan sandi |
+| `rekam_endpoint.py` | seluruh gunanya adalah kamu mengklik sendiri |
+| Sakelar di GUI | kalau orangnya memang ingin melihat prosesnya |
+
+Jendela yang ditampilkan ditaruh di **tengah layar** (`posisi_jendela()`
+menghitung dari `GetSystemMetrics`), bukan di pojok -- supaya waktu login
+Chrome-nya langsung kelihatan dan tidak perlu dicari atau digeser.
+
 ## Tab menumpuk tiap kali dijalankan
 
 Gejalanya: tiap run tabnya nambah, lama-lama Chrome penuh tab. Dua sebabnya:

@@ -49,6 +49,7 @@ class Aplikasi(tk.Tk):
         self.baris_toko = {}           # nama -> dict widget
 
         self._bangun_tampilan()
+        K.TAMPILKAN_BROWSER = self.var_tampil.get()
         self._muat_daftar_toko()
         self.after(100, self._baca_antrean)
         self.protocol("WM_DELETE_WINDOW", self._tutup)
@@ -84,6 +85,12 @@ class Aplikasi(tk.Tk):
                      ).pack(side="left", padx=6)
         ttk.Label(per, text="(bawaan: bulan penuh terakhir)",
                   foreground="#666").pack(side="left", padx=10)
+
+        self.var_tampil = tk.BooleanVar(
+            value=K.muat_setelan().get("tampilkan_browser", False))
+        ttk.Checkbutton(per, text="Tampilkan browser saat menarik data",
+                        variable=self.var_tampil,
+                        command=self._simpan_tampil).pack(side="right")
 
         # --- daftar toko ---
         bingkai = ttk.LabelFrame(self, text="Toko", padding=(10, 6))
@@ -189,6 +196,17 @@ class Aplikasi(tk.Tk):
         for n, b in self.baris_toko.items():
             if n in K.TOKO:
                 K.TOKO[n]["aktif"] = b["var"].get()
+
+    def _simpan_tampil(self):
+        """Browser di latar belakang atau kelihatan waktu menarik data.
+        Tidak berpengaruh ke Login Toko -- itu selalu ditampilkan."""
+        setelan = K.muat_setelan()
+        setelan["tampilkan_browser"] = self.var_tampil.get()
+        K.simpan_setelan(setelan)
+        K.TAMPILKAN_BROWSER = self.var_tampil.get()
+        self._tulis("Browser saat menarik data: "
+                    + ("ditampilkan" if self.var_tampil.get()
+                       else "latar belakang"))
 
     def _dipilih(self):
         return [(n, K.TOKO[n]) for n, b in self.baris_toko.items()

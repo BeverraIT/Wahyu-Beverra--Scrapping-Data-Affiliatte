@@ -53,9 +53,12 @@ def main():
     print(f"[i] Profil: {cfg['profil_chrome']} ({cfg.get('profil_dir') or 'Default'})")
     print(f"[i] shop_id: {cfg['shop_id']}  |  port CDP: {cfg.get('port_cdp') or K.PORT_CDP}")
 
+    # tampil=True dipaksa: seluruh gunanya langkah ini adalah kamu mengklik
+    # sendiri di jendelanya.
     m = Mesin(cfg["profil_chrome"],
               port=cfg.get("port_cdp"),
-              profil_dir=cfg.get("profil_dir")).buka()
+              profil_dir=cfg.get("profil_dir"),
+              tampil=True).buka()
     try:
         # tampilkan jendela supaya bisa diklik manual
         url = f"{K.URL_DASAR}?shop_region=ID&shop_id={cfg['shop_id']}&platform_data_source=shop"
@@ -67,9 +70,9 @@ def main():
         else:
             if not K.OFFSCREEN:
                 m.tampilkan_jendela()   # jaga-jaga: jendela kadang bergeser lagi
-            print("=== Chrome terbuka di pojok kiri atas layar. ===")
-            print("Kalau tetap tidak kelihatan: pastikan OFFSCREEN = False di konfigurasi.py,")
-            print("dan tutup dulu semua Chrome yang memakai profil toko ini.")
+            print("=== Chrome terbuka di tengah layar. ===")
+            print("Kalau tetap tidak kelihatan, tutup dulu semua Chrome yang")
+            print("memakai profil toko ini, lalu ulangi.")
         alamat = m.js("location.href") or ""
         if "errorpage" in alamat or "login" in alamat:
             print(f"[!] Halaman dilempar ke: {alamat}")

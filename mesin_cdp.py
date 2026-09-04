@@ -102,6 +102,35 @@ def salin_profil(sumber, tujuan, profil_dir=None, bersih=False, log=print,
     return tuju
 
 
+def ukuran_layar():
+    """Ukuran layar utama. Dipakai menaruh jendela di tengah."""
+    if os.name != "nt":
+        return 0, 0
+    try:
+        import ctypes
+        u = ctypes.windll.user32
+        try:
+            u.SetProcessDPIAware()
+        except Exception:
+            pass
+        return int(u.GetSystemMetrics(0)), int(u.GetSystemMetrics(1))
+    except Exception:
+        return 0, 0
+
+
+def posisi_jendela():
+    """Kiri-atas jendela. Di tengah layar kalau bisa -- supaya waktu login
+    Chrome-nya langsung kelihatan, tidak nyempil di pojok atau di luar
+    jangkauan monitor."""
+    if not getattr(K, "JENDELA_TENGAH", False):
+        return K.JENDELA_POSISI
+    lebar_layar, tinggi_layar = ukuran_layar()
+    w, h = K.JENDELA_UKURAN
+    if not lebar_layar or not tinggi_layar:
+        return K.JENDELA_POSISI
+    return max(0, (lebar_layar - w) // 2), max(0, (tinggi_layar - h) // 2)
+
+
 def _siapkan_preferences(profil, profil_dir="Default"):
     """Patch Preferences sebelum Chrome jalan:
     - balon 'Restore pages?' dimatikan
@@ -123,7 +152,7 @@ def _siapkan_preferences(profil, profil_dir="Default"):
         sesi["restore_on_startup"] = 5
         sesi["startup_urls"] = []
         if not K.OFFSCREEN:
-            x, y = K.JENDELA_POSISI
+            x, y = posisi_jendela()
             w, h = K.JENDELA_UKURAN
             tempat = data.setdefault("browser", {}).setdefault("window_placement", {})
             tempat.update({"left": x, "top": y, "right": x + w, "bottom": y + h,
@@ -135,9 +164,13 @@ def _siapkan_preferences(profil, profil_dir="Default"):
 
 
 class Mesin:
-    def __init__(self, profil_chrome, port=None, log=print, profil_dir=None):
+    def __init__(self, profil_chrome, port=None, log=print, profil_dir=None,
+                 tampil=None):
         self.profil = profil_chrome
         self.profil_dir = profil_dir
+        # None = ikut setelan; True = jendela kelihatan; False = latar belakang.
+        # Login memaksa True karena orangnya harus bisa mengetik.
+        self.tampil = K.TAMPILKAN_BROWSER if tampil is None else bool(tampil)
         self.port = port or K.PORT_CDP
         self.log = log
         self.proc = None
@@ -241,6 +274,30 @@ class Mesin:
         self.kirim("Page.enable")
         self.kirim("Runtime.enable")
         self.kirim("Network.enable")
+        if not self.tampil:
+            self._samarkan_headless()
+
+    def _samarkan_headless(self):
+        """Samakan User-Agent headless dengan Chrome biasa.
+
+        Headless mengaku 'HeadlessChrome/152.0.0.0'. Situs seperti Tokopedia
+        bisa memperlakukannya beda atau menolaknya sama sekali, dan gejalanya
+        bakal membingungkan: jalan waktu ditampilkan, gagal waktu di latar
+        belakang. Versinya diambil dari UA yang ada supaya ikut terbarui
+        sendiri waktu Chrome-nya diperbarui.
+        """
+        try:
+            ua = self.js("navigator.userAgent") or ""
+        except Exception:
+            return
+        if "HeadlessChrome" not in ua:
+            return
+        try:
+            self.kirim("Network.setUserAgentOverride",
+                       {"userAgent": ua.replace("HeadlessChrome", "Chrome")})
+            self.log("[cdp] User-Agent headless disamakan dengan Chrome biasa")
+        except Exception as e:
+            self.log(f"[cdp] gagal menyamakan User-Agent: {e}")
 
     def _jalankan_chrome(self):
         # JANGAN menolak kalau folder profilnya belum ada. Chrome membuatnya
@@ -269,12 +326,18 @@ class Mesin:
         if self.profil_dir:
             # login toko sering tidak ada di "Default"
             args.insert(-1, f"--profile-directory={self.profil_dir}")
-        if K.OFFSCREEN:
+        w, h = K.JENDELA_UKURAN
+        if not self.tampil:
+            # Headless: halaman tetap dirender penuh, cuma tidak ditampilkan.
+            # Ini satu-satunya cara menyembunyikan yang datanya tetap jalan --
+            # memindahkan jendela ke luar layar bikin Chrome menahan fetch.
+            args.insert(-1, "--headless=new")
+            args.insert(-1, f"--window-size={w},{h}")
+        elif K.OFFSCREEN:
             args.insert(-1, "--window-position=-32000,-32000")
             args.insert(-1, "--window-size=1600,1000")
         else:
-            x, y = K.JENDELA_POSISI
-            w, h = K.JENDELA_UKURAN
+            x, y = posisi_jendela()
             args.insert(-1, f"--window-position={x},{y}")
             args.insert(-1, f"--window-size={w},{h}")
         self.proc = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -287,9 +350,10 @@ class Mesin:
                 f"Chrome itu dengan --remote-debugging-port={self.port}")
 
         self._pasang_ws(target)
-        if not K.OFFSCREEN:
+        if self.tampil and not K.OFFSCREEN:
             self.tampilkan_jendela()
-        self.log("[cdp] Chrome siap")
+        self.log("[cdp] Chrome siap"
+                 + ("" if self.tampil else " (latar belakang)"))
         return self
 
     def _browser_rpc(self, panggilan, senyap=False):
@@ -335,7 +399,7 @@ class Mesin:
         Flag --window-position kadang kalah dari posisi tersimpan di profil."""
         if not self.target_id:
             return
-        x, y = K.JENDELA_POSISI
+        x, y = posisi_jendela()
         w, h = K.JENDELA_UKURAN
         r = self._browser_rpc([("Browser.getWindowForTarget",
                                 {"targetId": self.target_id})])

@@ -38,11 +38,14 @@ def sudah_ada_profil(cfg):
         "Network", "Cookies"))
 
 
-def _mesin(cfg, log):
+def _mesin(cfg, log, tampil=None):
+    """tampil=None -> ikut setelan (biasanya latar belakang).
+    Login memaksa True: orangnya harus bisa melihat dan mengetik."""
     from mesin_cdp import Mesin
     return Mesin(cfg["profil_chrome"], log=log,
                  port=cfg.get("port_cdp"),
-                 profil_dir=cfg.get("profil_dir")).buka()
+                 profil_dir=cfg.get("profil_dir"),
+                 tampil=tampil).buka()
 
 
 def cek(nama_toko, cfg, log=print, batas=60):
@@ -150,7 +153,10 @@ def login(nama_toko, cfg, log=print, batas_menit=10, berhenti=None):
     import tarik_creator as T
     log(f"[{nama_toko}] membuka Chrome...")
     try:
-        m = _mesin(cfg, log=log)
+        # tampil=True dipaksa: ini satu-satunya langkah yang butuh orangnya
+        # mengetik, jadi jendelanya harus kelihatan walau setelannya
+        # "latar belakang".
+        m = _mesin(cfg, log=log, tampil=True)
     except Exception as e:
         return False, f"Chrome tidak bisa dibuka: {e}"
     try:
