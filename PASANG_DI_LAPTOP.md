@@ -77,19 +77,56 @@ ulang Python-nya.
 
 ### B3. Pasang Git
 
+Ada dua cara. **Cara 1 jauh lebih cepat** — coba itu dulu.
+
+#### Cara 1: satu perintah (Windows 10/11 yang agak baru)
+
+1. Tekan tombol **Windows**, ketik `cmd`, lalu tekan Enter
+2. Ketik ini (boleh copy-paste, klik kanan di jendela hitam untuk paste):
+
+   ```
+   winget install --id Git.Git -e --source winget --accept-source-agreements --accept-package-agreements
+   ```
+
+3. Enter, lalu tunggu sampai muncul tulisan **Successfully installed**
+4. **Tutup jendela Command Prompt-nya, buka lagi yang baru.**
+
+   Ini wajib. Kalau tidak, `git` masih dianggap belum ada karena jendela lama
+   belum tahu ada program baru.
+
+Kalau muncul `'winget' is not recognized`, berarti Windows-nya terlalu lama —
+pakai Cara 2.
+
+#### Cara 2: unduh manual
+
 1. Buka <https://git-scm.com/download/win>
-2. Klik **64-bit Git for Windows Setup**
-3. Jalankan, lalu klik **Next** terus sampai **Install**
+2. Klik **64-bit Git for Windows Setup**, tunggu unduhannya
+3. Jalankan file-nya. Akan muncul **belasan layar** — klik **Next** terus,
+   kecuali dua layar ini:
 
-   Semua pilihan bawaannya sudah benar, tidak ada yang perlu diubah.
+   | Layar | Yang harus dipastikan |
+   |---|---|
+   | **"Choosing the default editor used by Git"** | Ganti dari `Vim` jadi **`Use Notepad as Git's default editor`**. Vim susah dipakai kalau belum terbiasa — bisa nyangkut tidak bisa keluar |
+   | **"Adjusting your PATH environment"** | Pilih yang **tengah**: *Git from the command line and also from 3rd-party software*. Ini pilihan bawaannya, jangan diubah — kalau salah, `Jalankan.bat` tidak akan menemukan git |
 
-**Cara memastikan berhasil:** di Command Prompt ketik:
+   Sisanya biarkan apa adanya, termasuk layar *"Configuring the line ending
+   conversions"* — aplikasi ini sudah mengurus sendiri lewat `.gitattributes`.
+
+4. Klik **Install**, tunggu, lalu **Finish**
+5. **Tutup Command Prompt yang sedang terbuka, buka lagi yang baru**
+
+#### Memastikan berhasil
+
+Di Command Prompt **yang baru dibuka**, ketik:
 
 ```
 git --version
 ```
 
-Harus muncul seperti `git version 2.xx.x`.
+Harus muncul seperti `git version 2.52.0.windows.1`.
+
+Kalau muncul `'git' is not recognized`, coba tutup-buka Command Prompt sekali
+lagi. Kalau masih, ulangi Cara 2 dan periksa layar **PATH** tadi.
 
 ### B4. Ambil aplikasinya
 
@@ -163,7 +200,8 @@ Kalau file Excel-nya ada dan isinya benar, laptop itu sudah beres.
 | Yang muncul | Artinya | Yang dilakukan |
 |---|---|---|
 | `'python' is not recognized` | "Add to PATH" terlewat waktu memasang | Pasang ulang Python, centang kotak itu |
-| `'git' is not recognized` | Git belum terpasang | Ulangi langkah B3 |
+| `'git' is not recognized` | Git belum terpasang, ATAU Command Prompt-nya belum ditutup-buka setelah memasang | Tutup semua Command Prompt, buka baru. Kalau masih, ulangi B3 |
+| `'winget' is not recognized` | Windows-nya terlalu lama untuk cara cepat | Pakai Cara 2 di langkah B3 |
 | Jendela CMD hilang cepat, tidak ada aplikasi | Kemungkinan file `.bat` rusak | Di folder aplikasi jalankan `python cek_bat.py` |
 | `ModuleNotFoundError` | Dibuka lewat `gui.py`, bukan `Jalankan.bat` | Tutup, klik `Jalankan.bat` |
 | "Google Chrome tidak ketemu" | Chrome belum terpasang | Ulangi langkah B1 |
