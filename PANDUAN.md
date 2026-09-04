@@ -135,6 +135,28 @@ sudah dicocokkan persis dengan header AFFILIATE 3 (16 kolom A-P). Kode pendek
 kolom "Produk Top 10" diisi di `KODE_PRODUK`; yang belum diisi ditebak dari
 kata terakhir nama produk dan selalu dilaporkan waktu Excel dibuat.
 
+## Tab menumpuk tiap kali dijalankan
+
+Gejalanya: tiap run tabnya nambah, lama-lama Chrome penuh tab. Dua sebabnya:
+
+1. **`--restore-last-session=false` justru MENYALAKAN pemulihan sesi.**
+   Chrome memeriksa flag ini dengan `HasSwitch()`, jadi nilainya diabaikan --
+   yang dilihat cuma flag-nya ada atau tidak. Menulis `=false` tetap dibaca
+   "pulihkan sesi lama". Flag itu sudah dibuang; pengaturannya sekarang di
+   Preferences (`session.restore_on_startup = 5`).
+
+2. **Situsnya membuka tab sendiri.** Sesudah login, Tokopedia kadang membuka
+   Affiliate Center di tab baru. Tab itu bukan buatan kita jadi tidak pernah
+   ditutup. `_tutup_tab_sisa()` membersihkannya di AWAL run berikutnya --
+   sengaja di awal, bukan di tengah, supaya tidak menutup tab yang sedang
+   dipakai orang untuk login.
+
+`tutup()` juga memakai `Browser.close` (tutup baik-baik) sebelum jatuh ke
+`terminate()`. `terminate()` itu kill mendadak: Chrome menganggapnya crash.
+
+Terukur sesudah diperbaiki: tiga run berturut-turut, tiap run mulai dengan
+1 tab walau run sebelumnya berakhir dengan 3.
+
 ## Popup pengumuman & peringatan halaman ditutup
 
 Affiliate Center kadang memunculkan modal pengumuman. Selama modalnya

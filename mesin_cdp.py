@@ -117,6 +117,11 @@ def _siapkan_preferences(profil, profil_dir="Default"):
             data = json.load(f)
         data.setdefault("profile", {})["exit_type"] = "Normal"
         data["profile"]["exited_cleanly"] = True
+        # Jangan memulihkan tab sesi sebelumnya. 5 = buka halaman tab baru.
+        # Tanpa ini tab menumpuk tiap kali aplikasi dijalankan.
+        sesi = data.setdefault("session", {})
+        sesi["restore_on_startup"] = 5
+        sesi["startup_urls"] = []
         if not K.OFFSCREEN:
             x, y = K.JENDELA_POSISI
             w, h = K.JENDELA_UKURAN
@@ -179,6 +184,9 @@ class Mesin:
         self.dilampirkan = True
         self.tab_dibuat = tid
         self._pasang_ws(target)
+        sisa = self._tutup_tab_sisa(kecuali=tid)
+        if sisa:
+            self.log(f"[cdp] {sisa} tab sisa run sebelumnya ditutup")
         # jendela orang tidak digeser-geser, cukup tab kita dimunculkan
         try:
             self.kirim("Page.bringToFront")
@@ -186,6 +194,30 @@ class Mesin:
             pass
         self.log("[cdp] Chrome siap (tab baru di jendela yang sudah login)")
         return True
+
+    def _tutup_tab_sisa(self, kecuali):
+        """Tutup tab yang tertinggal dari run sebelumnya.
+
+        Profil ini milik aplikasi sendiri, jadi tab yang masih nangkring di
+        situ memang sampah -- termasuk tab yang dibuka SENDIRI oleh situsnya
+        waktu login. Tanpa pembersihan ini, tiap kali dijalankan tabnya
+        nambah satu dan lama-lama menumpuk.
+
+        Dilakukan di awal, sebelum orangnya menyentuh apa pun -- bukan di
+        tengah jalan, supaya tidak menutup tab yang sedang dipakai login.
+        """
+        try:
+            daftar = requests.get(f"http://127.0.0.1:{self.port}/json",
+                                  timeout=3).json()
+        except Exception:
+            return 0
+        buang = [t["id"] for t in daftar
+                 if t.get("type") == "page" and t.get("id") != kecuali]
+        if not buang:
+            return 0
+        self._browser_rpc([("Target.closeTarget", {"targetId": t})
+                           for t in buang])
+        return len(buang)
 
     def _tunggu_target(self, cocok, detik=15):
         batas = time.time() + detik
@@ -225,7 +257,12 @@ class Mesin:
             "--no-first-run",
             "--no-default-browser-check",
             "--disable-session-crashed-bubble",
-            "--restore-last-session=false",
+            # JANGAN tambahkan --restore-last-session di sini. Chrome
+            # memeriksanya dengan HasSwitch(), jadi nilainya diabaikan:
+            # menulis "=false" pun tetap dibaca sebagai "pulihkan sesi lama".
+            # Dulu flag itu ada di sini dan justru bikin tab menumpuk tiap
+            # kali dijalankan. Pengaturan sesungguhnya ada di Preferences,
+            # lihat _siapkan_preferences().
             "--disable-features=Translate,OptimizationHints",
             "about:blank",
         ]
@@ -255,9 +292,13 @@ class Mesin:
         self.log("[cdp] Chrome siap")
         return self
 
-    def _browser_rpc(self, panggilan):
+    def _browser_rpc(self, panggilan, senyap=False):
         """Kirim perintah ke endpoint browser lewat koneksi pendek sendiri.
-        Domain Browser.* dan Target.* tidak tersedia dari websocket halaman."""
+        Domain Browser.* dan Target.* tidak tersedia dari websocket halaman.
+
+        `senyap` dipakai waktu menutup: Chrome mungkin memang sudah mati
+        (mis. tab terakhirnya baru ditutup), dan itu bukan masalah -- tidak
+        perlu menakuti orang dengan pesan merah di Catatan."""
         hasil = []
         try:
             info = requests.get(f"http://127.0.0.1:{self.port}/json/version",
@@ -265,7 +306,8 @@ class Mesin:
             bws = websocket.create_connection(info["webSocketDebuggerUrl"],
                                               suppress_origin=True, timeout=15)
         except Exception as e:
-            self.log(f"[cdp] tidak bisa sambung ke endpoint browser: {e}")
+            if not senyap:
+                self.log(f"[cdp] tidak bisa sambung ke endpoint browser: {e}")
             return hasil
         try:
             for pid, (metode, params) in enumerate(panggilan, start=1):
@@ -279,7 +321,8 @@ class Mesin:
                         break
                 hasil.append(jawab.get("result", {}))
         except Exception as e:
-            self.log(f"[cdp] perintah browser gagal: {e}")
+            if not senyap:
+                self.log(f"[cdp] perintah browser gagal: {e}")
         finally:
             try:
                 bws.close()
@@ -324,10 +367,22 @@ class Mesin:
             # Chrome ini punya orang -- jangan dimatikan, cukup tutup tab kita
             if self.tab_dibuat:
                 self._browser_rpc([("Target.closeTarget",
-                                    {"targetId": self.tab_dibuat})])
+                                    {"targetId": self.tab_dibuat})], senyap=True)
             return
+
+        # Tutup Chrome baik-baik dulu. terminate() itu kill mendadak: Chrome
+        # menganggapnya crash, lalu memulihkan tab-tab lama waktu dibuka lagi
+        # -- itu salah satu sebab tab menumpuk.
         try:
-            self.proc.terminate()
+            self._browser_rpc([("Browser.close", {})], senyap=True)
+        except Exception:
+            pass
+        for _ in range(20):
+            if self.proc is None or self.proc.poll() is not None:
+                return
+            time.sleep(0.25)
+        try:
+            self.proc.terminate()      # cadangan kalau tidak mau tutup sendiri
         except Exception:
             pass
 
