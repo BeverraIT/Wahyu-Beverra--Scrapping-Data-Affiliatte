@@ -3,7 +3,10 @@
 Aplikasi untuk mengambil **top 10 produk × 50 creator** dari Affiliate Center,
 langsung jadi Excel yang tinggal di-copy ke sheet AFFILIATE 3.
 
-Panduan ini untuk pemakai. Yang teknis ada di `PANDUAN.md`.
+Panduan ini untuk pemakai sehari-hari.
+
+- Baru mau memasang di laptop baru? Lihat `PASANG_DI_LAPTOP.md`.
+- Yang teknis (untuk yang merawat kodenya) ada di `PANDUAN.md`.
 
 ---
 
