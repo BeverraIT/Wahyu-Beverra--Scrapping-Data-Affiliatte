@@ -40,9 +40,6 @@ git clone <alamat-repo> TarikCreator
 cd TarikCreator
 ```
 
-Kalau diminta username/password GitHub, pakai akun yang sudah didaftarkan
-admin ke repo ini.
-
 > **Jangan menyalin folder aplikasi dari komputer orang lain.** Selain
 > ketinggalan versi, file-file sisa dari komputer itu bisa bikin error.
 > Pakai `git clone`, sekali saja.

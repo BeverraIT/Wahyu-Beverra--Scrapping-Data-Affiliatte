@@ -22,20 +22,14 @@ Kalau diminta login, pakai akun GitHub-mu (`BeverraIT`).
 > Tanpa langkah ini, laptop kantor akan mengambil versi lama yang masih ada
 > bug-nya.
 
-### A2. Beri akses ke orang kantor
+### A2. Akses — tidak perlu diapa-apakan
 
-Kalau repo-nya **privat**, tiap orang harus kamu daftarkan dulu:
+Repo ini **publik**, jadi orang kantor bisa langsung `git clone` tanpa akun
+GitHub, tanpa undangan, dan tanpa diminta login.
 
-1. Buka <https://github.com/BeverraIT/Wahyu-Beverra--Scrapping-Data-Affiliatte>
-2. Klik tab **Settings** → menu kiri **Collaborators**
-3. Klik **Add people**, masukkan username GitHub orang itu
-4. Orang itu akan dapat email undangan — **harus diterima dulu** sebelum bisa
-   `git clone`
-
-Kalau tidak mau repot dengan akun GitHub per orang, alternatifnya jadikan repo
-**publik**. Tapi ingat: `toko.json` (nama toko + shop_id) jadi bisa dilihat
-siapa saja. Itu bukan password dan tidak bisa dipakai masuk ke mana-mana, tapi
-membocorkan toko mana saja yang kalian kelola.
+> Konsekuensinya yang sudah disepakati: nama 7 toko, `shop_id`, dan kode
+> produk bisa dilihat siapa saja. Data creator, cookie login, dan file Excel
+> **tidak** ikut — semuanya di luar git sejak awal.
 
 ### A3. Catat yang perlu dibawa
 
@@ -44,7 +38,6 @@ Siapkan di catatan HP, akan dipakai di tiap laptop:
 - Alamat repo:
   `https://github.com/BeverraIT/Wahyu-Beverra--Scrapping-Data-Affiliatte.git`
 - Username + password akun toko yang akan dipegang orang itu
-- Username GitHub orang itu (kalau repo privat)
 
 ---
 
@@ -109,8 +102,7 @@ cd Aplikasi
 git clone https://github.com/BeverraIT/Wahyu-Beverra--Scrapping-Data-Affiliatte.git TarikCreator
 ```
 
-Kalau muncul jendela minta login GitHub, isi dengan akun orang itu (yang sudah
-kamu undang di langkah A2).
+Tidak akan diminta login — repo-nya publik.
 
 Hasilnya folder `C:\Aplikasi\TarikCreator`.
 
@@ -162,7 +154,6 @@ Kalau file Excel-nya ada dan isinya benar, laptop itu sudah beres.
 | Jendela CMD hilang cepat, tidak ada aplikasi | Kemungkinan file `.bat` rusak | Di folder aplikasi jalankan `python cek_bat.py` |
 | `ModuleNotFoundError` | Dibuka lewat `gui.py`, bukan `Jalankan.bat` | Tutup, klik `Jalankan.bat` |
 | "Google Chrome tidak ketemu" | Chrome belum terpasang | Ulangi langkah B1 |
-| Minta login GitHub terus | Orangnya belum diundang / belum terima undangan | Ulangi langkah A2 |
 | Antivirus kantor memblokir `.bat` | Kebijakan kantor | Minta IT mengizinkan folder `C:\Aplikasi\TarikCreator` |
 
 ---
