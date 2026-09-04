@@ -214,8 +214,10 @@ class Mesin:
         asal = os.path.join(self.profil, self.profil_dir or "Default")
         if not os.path.isdir(asal):
             raise RuntimeError(
-                f"Profil bot belum disiapkan: {asal}\n"
-                f"Jalankan dulu:  python siapkan_profil.py")
+                "Toko ini belum pernah login di komputer ini.\n"
+                'Buka aplikasinya (Jalankan.bat), lalu klik "Login Toko" di '
+                "baris toko ini.\n"
+                f"(folder profil yang dicari: {asal})")
         _siapkan_preferences(self.profil, self.profil_dir)
         args = [
             _cari_chrome(),

@@ -29,6 +29,10 @@ if not errorlevel 1 goto ada_repo
 echo   Folder ini bukan hasil "git clone", jadi tidak bisa diperbarui
 echo   otomatis.
 echo.
+echo   Kalau nama foldernya berakhiran "-master", berarti dulu diambil
+echo   lewat tombol "Download ZIP" di GitHub. Yang begitu tidak bisa
+echo   di-update. Harus diambil ulang dengan git clone.
+echo.
 echo   Minta alamat repo ke admin, lalu di folder kosong jalankan:
 echo     git clone ^<alamat-repo^> TarikCreator
 echo.

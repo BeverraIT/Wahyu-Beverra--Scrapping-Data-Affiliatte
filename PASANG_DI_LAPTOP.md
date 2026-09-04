@@ -108,6 +108,19 @@ Hasilnya folder `C:\Aplikasi\TarikCreator`.
 
 > Kalau `mkdir Aplikasi` bilang sudah ada, abaikan saja, lanjut.
 
+> ### JANGAN pakai tombol "Download ZIP"
+>
+> Di halaman GitHub ada tombol hijau **Code** → **Download ZIP**. **Jangan
+> dipakai.** Hasilnya folder berakhiran `-master` yang tidak bisa diperbarui
+> sama sekali — `Perbarui.bat` tidak akan jalan, dan tiap ada perbaikan harus
+> unduh ulang manual.
+>
+> Harus `git clone` seperti perintah di atas. Bedanya tidak kelihatan dari isi
+> foldernya, tapi menentukan bisa-tidaknya di-update.
+>
+> Sudah terlanjur pakai ZIP? Hapus foldernya, lalu ulangi `git clone`. Tidak
+> ada yang hilang — sesi login tersimpan terpisah di luar folder aplikasi.
+
 ### B5. Buka aplikasinya
 
 1. Buka folder `C:\Aplikasi\TarikCreator`
@@ -155,6 +168,9 @@ Kalau file Excel-nya ada dan isinya benar, laptop itu sudah beres.
 | `ModuleNotFoundError` | Dibuka lewat `gui.py`, bukan `Jalankan.bat` | Tutup, klik `Jalankan.bat` |
 | "Google Chrome tidak ketemu" | Chrome belum terpasang | Ulangi langkah B1 |
 | Antivirus kantor memblokir `.bat` | Kebijakan kantor | Minta IT mengizinkan folder `C:\Aplikasi\TarikCreator` |
+| Nama folder berakhiran `-master` | Diambil lewat Download ZIP, bukan `git clone` | Hapus foldernya, ulangi langkah B4 |
+| `Perbarui.bat` bilang "bukan hasil git clone" | Sama seperti di atas | Hapus foldernya, ulangi langkah B4 |
+| Menjalankan `siapkan_profil.py` | File itu sudah dihapus, tidak dipakai lagi | Pakai **Login Toko** di aplikasi |
 
 ---
 
