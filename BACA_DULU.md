@@ -69,6 +69,23 @@ Cukup sekali. Sesinya tersimpan, besok-besok tinggal pakai.
 Ulangi untuk tiap toko yang jadi tanggung jawabmu. Toko yang tidak kamu
 pegang boleh dibiarkan tidak login.
 
+#### Sudah login di Chrome biasa? Tidak perlu login dua kali
+
+Kalau di Chrome yang kamu pakai sehari-hari sudah login ke toko itu, sesinya
+bisa langsung diambil:
+
+1. **Tutup SEMUA jendela Google Chrome** (wajib, kalau tidak file cookie-nya
+   terkunci dan salinannya rusak)
+2. Centang toko yang mau diambil
+3. Klik **Ambil Login dari Chrome**
+
+Toko hanya diambil kalau riwayat Chrome membuktikan profil itu memang pernah
+membuka toko tersebut **dan** sesinya masih hidup. Yang tidak terbukti sengaja
+dilewati — lebih baik login sekali lagi daripada salah ambil sesi toko lain
+dan datanya tertukar.
+
+Setelah itu klik **Cek Semua** untuk memastikan sesinya benar-benar jalan.
+
 ---
 
 ## Kalau ada pembaruan aplikasi

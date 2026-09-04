@@ -99,6 +99,8 @@ class Aplikasi(tk.Tk):
                    command=self._tambah_toko).pack(side="left", padx=6)
         ttk.Button(kepala, text="Cek Semua",
                    command=self._cek_toko).pack(side="left", padx=6)
+        ttk.Button(kepala, text="Ambil Login dari Chrome",
+                   command=self._impor_chrome).pack(side="left", padx=6)
 
         self.kotak_toko = ttk.Frame(bingkai)
         self.kotak_toko.pack(fill="x", pady=(8, 2))
@@ -300,6 +302,66 @@ class Aplikasi(tk.Tk):
                         tag="bagus" if ok else "galat")
 
         self._mulai(f"Login {nama}", kerja)
+
+    def _impor_chrome(self):
+        """Ambil sesi login dari Chrome yang biasa dipakai orang ini."""
+        import impor_profil as I
+
+        daftar = self._dipilih()
+        if not daftar:
+            messagebox.showinfo(JUDUL, "Centang dulu toko yang mau diambil sesinya.")
+            return
+        if I.chrome_masih_jalan():
+            messagebox.showwarning(
+                JUDUL,
+                "Tutup SEMUA jendela Google Chrome dulu.\n\n"
+                "Selama Chrome jalan, file cookie-nya terkunci dan sesinya\n"
+                "tersalin setengah jadi — kelihatan berhasil tapi nanti\n"
+                "tetap diminta login.")
+            return
+        if not messagebox.askyesno(
+                JUDUL,
+                "Ambil sesi login dari Chrome yang biasa kamu pakai?\n\n"
+                "Toko hanya diambil kalau riwayat Chrome membuktikan profil itu\n"
+                "memang pernah membuka toko tersebut. Yang tidak terbukti akan\n"
+                "dilewati — login manual saja lewat tombol Login Toko.\n\n"
+                "Pastikan semua jendela Chrome sudah ditutup."):
+            return
+
+        def catat(teks, tag=None):
+            self._kirim("log", teks=teks, tag=tag)
+
+        def kerja():
+            self._kirim("progres", maks=len(daftar), nilai=0)
+            berhasil, lewat = 0, []
+            for i, (n, cfg) in enumerate(daftar, 1):
+                if self.minta_berhenti.is_set():
+                    break
+                self._kirim("status", teks=f"ambil sesi {n} ({i}/{len(daftar)})")
+                self._kirim("status_toko", toko=n, teks="mengambil sesi...",
+                            kode=akun.LAMBAT)
+                catat(f"=== {n}")
+                ok, pesan = I.impor(n, cfg, log=catat)
+                catat(f"  {'[OK]' if ok else '[-]'} {pesan}")
+                self._kirim("status_toko", toko=n,
+                            teks="sesi diambil, klik Cek" if ok else pesan,
+                            kode=akun.SIAP if ok else akun.BELUM_ADA)
+                if ok:
+                    berhasil += 1
+                else:
+                    lewat.append(n)
+                self._kirim("progres", maks=len(daftar), nilai=i)
+
+            catat(f"Selesai: {berhasil} toko sesinya terambil, "
+                  f"{len(lewat)} dilewati")
+            if lewat:
+                catat("Yang dilewati harus login manual lewat tombol "
+                      '"Login Toko": ' + ", ".join(lewat), "galat")
+            if berhasil:
+                catat('Klik "Cek Semua" untuk memastikan sesinya benar-benar '
+                      "hidup.", "bagus")
+
+        self._mulai("Ambil sesi dari Chrome", kerja)
 
     def _cek_toko(self, nama=None):
         daftar = [(nama, K.TOKO[nama])] if nama else self._dipilih()

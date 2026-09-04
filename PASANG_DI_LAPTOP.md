@@ -174,6 +174,12 @@ berbahaya.
 
 Di jendela aplikasi:
 
+> **Kalau Chrome laptop itu sudah login ke tokonya**, lewati langkah di bawah:
+> tutup semua jendela Chrome, centang tokonya, lalu klik
+> **Ambil Login dari Chrome**. Sesinya langsung dipindah, tidak perlu login
+> dua kali. Toko yang tidak terbukti login akan dilewati — itu tetap harus
+> login manual seperti di bawah.
+
 1. Klik **Login Toko** di baris toko yang jadi tanggung jawab orang itu
 2. Chrome terbuka di halaman Affiliate Center
 3. Login pakai akun toko tersebut

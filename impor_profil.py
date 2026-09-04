@@ -1,21 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Pindahkan sesi login dari Chrome lain ke profil milik aplikasi.
+Ambil sesi login dari Chrome yang biasa dipakai, supaya tidak login dua kali.
 
-Dipakai SEKALI saja, kalau di komputer ini sudah ada Chrome yang login ke
-toko-toko itu dan sayang kalau harus login ulang satu per satu. Orang baru
-di kantor tidak butuh ini -- cukup klik "Login Toko" di aplikasinya.
+Dipakai sekali di komputer yang Chrome-nya SUDAH login ke toko-toko itu.
+Orang yang Chrome-nya belum login tidak butuh ini -- cukup klik "Login Toko".
 
-  python impor_profil.py --dari "C:\\Users\\User\\ChromeToko"
-  python impor_profil.py --dari "..." --toko yarra
+  python impor_profil.py                      <- cari Chrome biasa otomatis
+  python impor_profil.py --toko minzo         <- satu toko saja
+  python impor_profil.py --dari "D:\\ChromeToko"  <- folder lain
 
-Untuk tiap toko, folder sumber dicari berdasarkan slug (mis. "yarra" akan
-mencocokkan folder "yarra_bot" lalu "yarra"), lalu di dalamnya dipilih
-profile-directory yang cookie SESI-nya (seller-id + affiliate-id) paling
-banyak -- bukan yang total cookienya paling banyak. Hasilnya disalin jadi "Default" di profil aplikasi.
+CARA MENCOCOKKAN TOKO -> PROFIL CHROME
+Satu Chrome bisa punya banyak profil (Default, Profile 1, ...), dan tidak ada
+namanya yang menyebut toko. Menebak dari "profil mana yang cookie-nya paling
+banyak" BERBAHAYA: bisa saja sesi toko lain yang terbawa, lalu data toko A
+tersimpan dengan nama toko B tanpa ketahuan.
 
-Chrome sumber harus ditutup dulu: file cookie SQLite yang sedang dipakai
-tidak bisa disalin utuh.
+Jadi pencocokannya pakai bukti: profil dipilih hanya kalau riwayatnya
+benar-benar pernah membuka URL dengan shop_id toko itu. Kalau tidak ada bukti,
+toko itu DILEWATI dan disuruh login manual -- lebih baik login sekali lagi
+daripada dapat data toko yang salah.
+
+Chrome harus DITUTUP dulu: file cookie SQLite yang sedang dipakai tidak bisa
+disalin utuh.
 """
 import os
 import shutil
@@ -26,91 +32,181 @@ import tempfile
 import konfigurasi as K
 from mesin_cdp import chrome_pakai_profil, salin_profil
 
+# Profil bawaan Chrome yang tidak pernah dipakai orang untuk login
+BUKAN_PROFIL = {"System Profile", "Guest Profile"}
 
-def _nilai_sesi(profil_dir):
-    """Seberapa 'sudah login' profile-directory ini.
 
-    Sengaja HANYA menghitung cookie seller-id + affiliate-id, bukan semua
-    cookie tokopedia. Folder "Default" biasanya punya cookie tokopedia
-    terbanyak (iklan, tracking) padahal justru bukan yang login -- sesi
-    aslinya ada di folder bernama toko."""
-    ck = os.path.join(profil_dir, "Network", "Cookies")
-    if not os.path.exists(ck):
-        return 0
+def akar_chrome():
+    """Kandidat --user-data-dir Chrome yang biasa dipakai orang."""
+    lokal = os.environ.get("LOCALAPPDATA") or ""
+    programfiles = os.environ.get("PROGRAMFILES") or ""
+    kandidat = [
+        os.path.join(lokal, "Google", "Chrome", "User Data"),
+        os.path.join(lokal, "Google", "Chrome Beta", "User Data"),
+        os.path.join(lokal, "Chromium", "User Data"),
+    ]
+    if programfiles:
+        kandidat.append(os.path.join(lokal, "Google", "Chrome SxS", "User Data"))
+    return [p for p in kandidat if os.path.isdir(p)]
+
+
+def profil_di(akar):
+    """Nama profile-directory di dalam satu user-data-dir."""
+    if not os.path.isdir(akar):
+        return []
+    keluar = []
+    for nama in sorted(os.listdir(akar)):
+        if nama in BUKAN_PROFIL:
+            continue
+        p = os.path.join(akar, nama)
+        if os.path.isdir(p) and os.path.exists(os.path.join(p, "Preferences")):
+            keluar.append(nama)
+    return keluar
+
+
+def _tanya_sqlite(berkas, sql, params=()):
+    """Baca database Chrome lewat salinan -- aslinya bisa terkunci."""
+    if not os.path.exists(berkas):
+        return None
     tmp = tempfile.mkdtemp()
     try:
-        salin = os.path.join(tmp, "c.db")
-        shutil.copy2(ck, salin)
+        salin = os.path.join(tmp, "db")
+        shutil.copy2(berkas, salin)
         con = sqlite3.connect(salin)
-        n = con.execute(
-            "SELECT count(*) FROM cookies WHERE host_key LIKE '%seller-id%'"
-            " OR host_key LIKE '%affiliate-id%'").fetchone()[0]
-        con.close()
-        return n
+        try:
+            return con.execute(sql, params).fetchone()[0]
+        finally:
+            con.close()
     except Exception:
-        return 0
+        return None
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def cari_sumber(akar, slug):
-    """Cari (user_data_dir, profile_directory) yang sesinya paling lengkap."""
-    kandidat_induk = [os.path.join(akar, slug + "_bot"), os.path.join(akar, slug)]
+def bukti_toko(profil_dir, shop_id):
+    """Berapa kali profil ini membuka halaman dengan shop_id toko tersebut.
+    Ini bukti pencocokan, bukan tebakan."""
+    if not shop_id:
+        return 0
+    return _tanya_sqlite(
+        os.path.join(profil_dir, "History"),
+        "SELECT count(*) FROM urls WHERE url LIKE ?",
+        (f"%shop_id={shop_id}%",)) or 0
+
+
+def cookie_sesi(profil_dir):
+    """Jumlah cookie sesi Tokopedia. Dipakai hanya untuk keterangan, BUKAN
+    untuk memilih profil -- lihat catatan di atas."""
+    return _tanya_sqlite(
+        os.path.join(profil_dir, "Network", "Cookies"),
+        "SELECT count(*) FROM cookies WHERE host_key LIKE '%seller-id%'"
+        " OR host_key LIKE '%affiliate-id%'") or 0
+
+
+def cari_profil(shop_id, akar_tambahan=None, slug=None):
+    """Cari (akar, profil, bukti, cookie) yang terbukti pernah membuka toko ini.
+    Kembalikan None kalau tidak ada buktinya."""
+    akar_semua = list(akar_chrome())
+    if akar_tambahan:
+        akar_semua.insert(0, akar_tambahan)
+        # dukung juga susunan lama: <akar>/<slug>_bot dan <akar>/<slug>
+        if slug:
+            for sub in (slug + "_bot", slug):
+                p = os.path.join(akar_tambahan, sub)
+                if os.path.isdir(p):
+                    akar_semua.append(p)
+
     terbaik = None
-    for induk in kandidat_induk:
-        if not os.path.isdir(induk):
-            continue
-        for prof in sorted(os.listdir(induk)):
-            pd = os.path.join(induk, prof)
-            if not os.path.isdir(pd):
+    pernah_buka = False          # ada yang membuka toko ini, tapi tidak login
+    for akar in akar_semua:
+        for prof in profil_di(akar):
+            pd = os.path.join(akar, prof)
+            bukti = bukti_toko(pd, shop_id)
+            if not bukti:
                 continue
-            n = _nilai_sesi(pd)
-            if n and (terbaik is None or n > terbaik[2]):
-                terbaik = (induk, prof, n)
-    return terbaik
+            pernah_buka = True
+            # Bukti riwayat saja TIDAK cukup. Profil bisa pernah membuka
+            # halamannya lalu logout / sesinya kedaluwarsa. Kalau tetap
+            # disalin, hasilnya profil kosong yang kelihatan berhasil
+            # padahal nanti tetap diminta login.
+            ck = cookie_sesi(pd)
+            if not ck:
+                continue
+            if terbaik is None or bukti > terbaik[2]:
+                terbaik = (akar, prof, bukti, ck)
+    if terbaik:
+        return terbaik
+    return "pernah_buka_tapi_logout" if pernah_buka else None
+
+
+def chrome_masih_jalan():
+    """Chrome apa pun yang sedang jalan bikin cookie-nya terkunci."""
+    return chrome_pakai_profil("Chrome")
+
+
+def impor(nama_toko, cfg, akar_tambahan=None, log=print):
+    """Salin sesi login untuk satu toko. Kembalikan (berhasil, pesan)."""
+    shop_id = cfg.get("shop_id")
+    if not shop_id:
+        return False, "shop_id belum diisi"
+
+    temu = cari_profil(shop_id, akar_tambahan, cfg.get("slug"))
+    if temu == "pernah_buka_tapi_logout":
+        return False, "Chrome pernah buka toko ini tapi sesinya sudah habis"
+    if not temu:
+        return False, "tidak ada profil Chrome yang pernah membuka toko ini"
+
+    akar, prof, bukti, ck = temu
+    log(f"  sumber: {akar} [{prof}] ({bukti}x buka toko ini, {ck} cookie sesi)")
+    try:
+        salin_profil(akar, cfg["profil_chrome"], prof, bersih=True,
+                     log=lambda t: log("  " + t), profil_dir_tujuan="Default")
+    except Exception as e:
+        return False, f"gagal menyalin: {e}"
+    return True, f"sesi diambil dari profil Chrome \"{prof}\""
 
 
 def main():
-    if "--dari" not in sys.argv:
-        print(__doc__)
-        return 1
-    akar = sys.argv[sys.argv.index("--dari") + 1]
-    if not os.path.isdir(akar):
-        print(f"[x] Folder tidak ada: {akar}")
+    akar_tambahan = None
+    if "--dari" in sys.argv:
+        akar_tambahan = sys.argv[sys.argv.index("--dari") + 1]
+        if not os.path.isdir(akar_tambahan):
+            print(f"[x] Folder tidak ada: {akar_tambahan}")
+            return 1
+
+    daftar = (K.toko_dari_argv(sys.argv) if "--toko" in sys.argv
+              else list(K.TOKO.items()))
+
+    print("Chrome yang ditemukan:")
+    for a in ([akar_tambahan] if akar_tambahan else []) + akar_chrome():
+        print(f"  {a}")
+        for p in profil_di(a):
+            print(f"      {p}")
+    print()
+
+    if chrome_masih_jalan():
+        print("[x] Chrome masih jalan. TUTUP SEMUA jendela Chrome dulu,")
+        print("[x] kalau tidak file cookie-nya terkunci dan salinannya rusak.")
         return 1
 
-    daftar = K.toko_dari_argv(sys.argv) if "--toko" in sys.argv else list(K.TOKO.items())
-    berhasil = kosong = 0
+    berhasil, lewat = 0, []
     for nama, cfg in daftar:
-        print(f"\n=== {nama} (slug: {cfg['slug']})")
-        temu = cari_sumber(akar, cfg["slug"])
-        if not temu:
-            print(f"  [-] tidak ketemu profil yang sudah login di {akar}")
-            kosong += 1
-            continue
-        induk, prof, n = temu
-        print(f"  sumber: {induk}  [{prof}]  ({n} cookie sesi)")
+        print(f"=== {nama}")
+        ok, pesan = impor(nama, cfg, akar_tambahan)
+        print(f"  {'[OK]' if ok else '[-]'} {pesan}\n")
+        if ok:
+            berhasil += 1
+        else:
+            lewat.append(nama)
 
-        if chrome_pakai_profil(induk):
-            print("  [x] Chrome yang memakai profil itu MASIH JALAN. Tutup dulu.")
-            kosong += 1
-            continue
-        try:
-            hasil = salin_profil(induk, cfg["profil_chrome"], prof,
-                                 bersih=True, log=lambda t: print("  " + t),
-                                 profil_dir_tujuan="Default")
-        except Exception as e:
-            print(f"  [x] gagal: {e}")
-            kosong += 1
-            continue
-        print(f"  [OK] -> {hasil}")
-        berhasil += 1
-
-    print("\n" + "=" * 56)
-    print(f"{berhasil} toko terimpor, {kosong} dilewati")
+    print("=" * 58)
+    print(f"{berhasil} toko sesinya terambil, {len(lewat)} dilewati")
+    if lewat:
+        print("\nDilewati (login manual saja lewat tombol \"Login Toko\"):")
+        for n in lewat:
+            print(f"  - {n}")
     if berhasil:
-        print("\nCek hasilnya:  python cek_toko.py")
-        print("Toko yang gagal: buka aplikasinya, klik \"Login Toko\".")
+        print("\nPastikan hasilnya benar:  python cek_toko.py")
     return 0
 
 
