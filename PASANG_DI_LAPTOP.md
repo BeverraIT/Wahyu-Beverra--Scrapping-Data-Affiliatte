@@ -179,6 +179,9 @@ Di jendela aplikasi:
 > **Ambil Login dari Chrome**. Sesinya langsung dipindah, tidak perlu login
 > dua kali. Toko yang tidak terbukti login akan dilewati — itu tetap harus
 > login manual seperti di bawah.
+>
+> Chrome versi baru mengunci cookienya supaya tidak bisa dipindah, jadi sering
+> kali cara ini memang ditolak. Itu wajar — login manual saja, cuma sekali.
 
 1. Klik **Login Toko** di baris toko yang jadi tanggung jawab orang itu
 2. Chrome terbuka di halaman Affiliate Center

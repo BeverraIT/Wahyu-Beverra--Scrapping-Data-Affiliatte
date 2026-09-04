@@ -94,6 +94,44 @@ def bukti_toko(profil_dir, shop_id):
         (f"%shop_id={shop_id}%",)) or 0
 
 
+def cookie_terkunci(akar, prof):
+    """True kalau cookie profil ini dikunci App-Bound Encryption (v20).
+
+    Chrome sejak v127 mengenkripsi cookie dengan kunci yang terikat ke
+    aplikasi (Local State -> os_crypt.app_bound_encrypted_key, nilai cookie
+    berawalan 'v20'). Cookie begitu SENGAJA tidak bisa dibaca kalau filenya
+    disalin ke folder lain -- itu memang tujuannya, mencegah pencurian sesi.
+
+    Menyalinnya tetap "berhasil" tanpa error, tapi hasilnya profil yang
+    kelihatan punya cookie padahal tidak bisa login. Jadi harus dideteksi
+    di sini, sebelum menyalin, supaya tidak memberi harapan palsu.
+
+    Cookie lama berawalan 'v10' masih bisa disalin (kunci DPAPI, terikat ke
+    akun Windows, bukan ke aplikasi).
+    """
+    ck = os.path.join(akar, prof, "Network", "Cookies")
+    if not os.path.exists(ck):
+        return False
+    tmp = tempfile.mkdtemp()
+    try:
+        salin = os.path.join(tmp, "c.db")
+        shutil.copy2(ck, salin)
+        con = sqlite3.connect(salin)
+        try:
+            for (v,) in con.execute(
+                    "SELECT encrypted_value FROM cookies"
+                    " WHERE host_key LIKE '%tokopedia%' LIMIT 50"):
+                if bytes(v)[:3] == b"v20":
+                    return True
+        finally:
+            con.close()
+    except Exception:
+        return False
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    return False
+
+
 def cookie_sesi(profil_dir):
     """Jumlah cookie sesi Tokopedia. Dipakai hanya untuk keterangan, BUKAN
     untuk memilih profil -- lihat catatan di atas."""
@@ -118,6 +156,7 @@ def cari_profil(shop_id, akar_tambahan=None, slug=None):
 
     terbaik = None
     pernah_buka = False          # ada yang membuka toko ini, tapi tidak login
+    terkunci = False             # ketemu, tapi cookienya v20 (tidak bisa disalin)
     for akar in akar_semua:
         for prof in profil_di(akar):
             pd = os.path.join(akar, prof)
@@ -132,10 +171,15 @@ def cari_profil(shop_id, akar_tambahan=None, slug=None):
             ck = cookie_sesi(pd)
             if not ck:
                 continue
+            if cookie_terkunci(akar, prof):
+                terkunci = True
+                continue
             if terbaik is None or bukti > terbaik[2]:
                 terbaik = (akar, prof, bukti, ck)
     if terbaik:
         return terbaik
+    if terkunci:
+        return "terkunci_chrome_baru"
     return "pernah_buka_tapi_logout" if pernah_buka else None
 
 
@@ -151,6 +195,9 @@ def impor(nama_toko, cfg, akar_tambahan=None, log=print):
         return False, "shop_id belum diisi"
 
     temu = cari_profil(shop_id, akar_tambahan, cfg.get("slug"))
+    if temu == "terkunci_chrome_baru":
+        return False, ("Chrome versi baru mengunci cookienya (v20) - tidak bisa "
+                       "dipindah, harus Login Toko sekali")
     if temu == "pernah_buka_tapi_logout":
         return False, "Chrome pernah buka toko ini tapi sesinya sudah habis"
     if not temu:

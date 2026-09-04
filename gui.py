@@ -322,9 +322,10 @@ class Aplikasi(tk.Tk):
         if not messagebox.askyesno(
                 JUDUL,
                 "Ambil sesi login dari Chrome yang biasa kamu pakai?\n\n"
-                "Toko hanya diambil kalau riwayat Chrome membuktikan profil itu\n"
-                "memang pernah membuka toko tersebut. Yang tidak terbukti akan\n"
-                "dilewati — login manual saja lewat tombol Login Toko.\n\n"
+                "CATATAN: Chrome versi baru mengunci cookienya supaya tidak\n"
+                "bisa dipindah — itu pengaman anti-pencurian sesi. Kalau\n"
+                "Chrome-mu termasuk yang baru, tokonya akan dilewati dan tetap\n"
+                "harus Login Toko sekali. Itu wajar, bukan error.\n\n"
                 "Pastikan semua jendela Chrome sudah ditutup."):
             return
 

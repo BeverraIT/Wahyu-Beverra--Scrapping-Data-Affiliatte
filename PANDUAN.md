@@ -135,6 +135,34 @@ sudah dicocokkan persis dengan header AFFILIATE 3 (16 kolom A-P). Kode pendek
 kolom "Produk Top 10" diisi di `KODE_PRODUK`; yang belum diisi ditebak dari
 kata terakhir nama produk dan selalu dilaporkan waktu Excel dibuat.
 
+## Kenapa sesi Chrome tidak bisa disalin
+
+Chrome sejak v127 mengenkripsi cookie dengan App-Bound Encryption: nilai
+cookie berawalan `v20` dan kuncinya ada di `Local State` sebagai
+`os_crypt.app_bound_encrypted_key`, terikat ke aplikasi Chrome-nya. Cookie
+begitu **sengaja** tidak bisa dibaca kalau filenya disalin ke folder lain --
+memang itu tujuannya, mencegah pencurian sesi.
+
+Terukur di komputer ini:
+
+| Sumber | `app_bound_key` | Versi cookie | Bisa disalin? |
+|---|---|---|---|
+| Chrome sehari-hari | ADA | `v20` | tidak |
+| Profil lama `ChromeToko` | - | `v10` | ya |
+
+Makanya `impor_profil.py` berhasil untuk profil `ChromeToko` tapi gagal untuk
+Chrome biasa. Yang berbahaya: menyalinnya tetap "berhasil" tanpa error, lalu
+profilnya kelihatan punya cookie padahal tidak bisa login. Jadi `v20`
+dideteksi SEBELUM menyalin dan ditolak dengan alasan yang jelas.
+
+Jalan keluar lain sudah dipertimbangkan dan buntu: menyetir profil Chrome
+asli lewat CDP juga diblokir Chrome (sejak v136 `--remote-debugging-port`
+diabaikan untuk user-data-dir bawaan, alasan yang sama). Dua pengaman itu
+bekerja bersamaan, dan memang begitu rancangannya.
+
+Kesimpulannya: untuk Chrome modern, **login sekali lewat tombol Login Toko**
+adalah satu-satunya cara -- dan itu cukup sekali seumur pemakaian.
+
 ## Pelajaran soal file .bat
 
 Dua kali kena, keduanya gejalanya "jendela CMD hilang begitu saja":

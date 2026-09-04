@@ -86,6 +86,12 @@ dan datanya tertukar.
 
 Setelah itu klik **Cek Semua** untuk memastikan sesinya benar-benar jalan.
 
+> **Sering kali ini memang tidak bisa, dan itu wajar.** Chrome versi baru
+> mengunci cookienya supaya tidak bisa dipindah ke folder lain — pengaman
+> anti-pencurian sesi. Kalau muncul pesan *"Chrome versi baru mengunci
+> cookienya"*, tidak ada yang salah: klik **Login Toko** dan login sekali.
+> Cuma butuh setengah menit, dan cukup sekali seumur pemakaian.
+
 ---
 
 ## Kalau ada pembaruan aplikasi
